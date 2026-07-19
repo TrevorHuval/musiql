@@ -10,7 +10,7 @@ Prerequisites: .NET 10 SDK, Node 20+, Docker.
 
 ```sh
 cp .env.example .env          # dev database credentials
-docker compose up -d          # Postgres 17 on localhost:5432
+docker compose up -d          # Postgres 17 on localhost:5442
 dotnet test                   # backend tests
 dotnet run --project src/MusiQL.Api   # API on http://localhost:5272
 ```
