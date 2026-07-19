@@ -7,4 +7,5 @@ public sealed record CompiledQuery(
     IReadOnlyList<MqlParameter> Parameters,
     string Entity,
     IReadOnlyList<ResultColumn> ResultColumns,
-    int RowLimit);
+    int RowLimit,
+    bool FromLibrary = false);

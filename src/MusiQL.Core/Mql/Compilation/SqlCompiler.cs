@@ -59,7 +59,8 @@ public sealed class SqlCompiler
         _parameters.Add(new MqlParameter(LimitParam, limit));
         sql.Append(" LIMIT ").Append(LimitParam);
 
-        return new CompiledQuery(sql.ToString(), _parameters, _entity.Name, _entity.ResultColumns, limit);
+        return new CompiledQuery(
+            sql.ToString(), _parameters, _entity.Name, _entity.ResultColumns, limit, query.FromLibrary);
     }
 
     private string CompileExpr(MqlExpr expr) => expr switch
