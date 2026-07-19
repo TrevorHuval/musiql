@@ -1,0 +1,18 @@
+CREATE INDEX ON staging.artist (id);
+CREATE INDEX ON staging.artist_credit_name (artist_credit, position);
+CREATE INDEX ON staging.release_group (id);
+CREATE INDEX ON staging.release_group (artist_credit);
+CREATE INDEX ON staging.release_group_meta (id);
+CREATE INDEX ON staging.release_group_primary_type (id);
+CREATE INDEX ON staging.release (status);
+CREATE INDEX ON staging.release (release_group);
+CREATE INDEX ON staging.release_status (id);
+CREATE INDEX ON staging.recording (artist_credit);
+CREATE INDEX ON staging.medium (id);
+CREATE INDEX ON staging.track (medium);
+CREATE INDEX ON staging.tag (id);
+CREATE INDEX ON staging.tag (lower(name));
+CREATE INDEX ON staging.genre (lower(name));
+CREATE INDEX ON staging.artist_tag (tag);
+CREATE INDEX ON staging.release_group_tag (tag);
+CREATE INDEX ON staging.recording_tag (tag);
