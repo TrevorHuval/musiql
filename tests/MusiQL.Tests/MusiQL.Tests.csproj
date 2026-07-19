@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\src\MusiQL.Core\MusiQL.Core.csproj" />
     <ProjectReference Include="..\..\src\MusiQL.Data\MusiQL.Data.csproj" />
     <ProjectReference Include="..\..\src\MusiQL.Api\MusiQL.Api.csproj" />
+    <ProjectReference Include="..\..\src\MusiQL.Etl\MusiQL.Etl.csproj" />
   </ItemGroup>
 
 </Project>
