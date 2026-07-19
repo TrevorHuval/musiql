@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using MusiQL.Data.App;
 using MusiQL.Data.Catalog;
 
 namespace MusiQL.Data;
@@ -14,6 +15,7 @@ public class MusiQLDbContext(DbContextOptions<MusiQLDbContext> options) : DbCont
     public DbSet<ArtistGenre> ArtistGenres => Set<ArtistGenre>();
     public DbSet<ReleaseGroupGenre> ReleaseGroupGenres => Set<ReleaseGroupGenre>();
     public DbSet<RecordingGenre> RecordingGenres => Set<RecordingGenre>();
+    public DbSet<UserLibrary> UserLibrary => Set<UserLibrary>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -88,6 +90,14 @@ public class MusiQLDbContext(DbContextOptions<MusiQLDbContext> options) : DbCont
             e.HasIndex(rg => rg.GenreId);
             e.HasOne(rg => rg.Recording).WithMany(r => r.Genres).HasForeignKey(rg => rg.RecordingId);
             e.HasOne(rg => rg.Genre).WithMany().HasForeignKey(rg => rg.GenreId);
+        });
+
+        model.Entity<UserLibrary>(e =>
+        {
+            e.ToTable("user_library", "app");
+            e.HasKey(ul => new { ul.UserId, ul.RecordingId });
+            e.HasIndex(ul => ul.RecordingId);
+            e.Property(ul => ul.AddedAt).HasDefaultValueSql("now()");
         });
 
         foreach (var entity in model.Model.GetEntityTypes())
