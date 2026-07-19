@@ -31,7 +31,41 @@ Open http://localhost:5173 — the page reports API and database health. `npm te
 | --- | --- |
 | `src/MusiQL.Api` | ASP.NET Core Web API (minimal hosting) |
 | `src/MusiQL.Core` | Domain model and MQL query engine |
-| `src/MusiQL.Data` | EF Core / Npgsql data access |
+| `src/MusiQL.Data` | EF Core / Npgsql data access and catalog schema |
 | `src/MusiQL.Etl` | MusicBrainz catalog ETL (console) |
 | `tests/MusiQL.Tests` | xUnit backend tests |
 | `frontend` | React + Vite + TypeScript client |
+
+## Catalog ETL
+
+The `MusiQL.Etl` console builds the `catalog` schema from MusicBrainz PostgreSQL dumps. It imports only what playlist queries need — artists, release groups, releases, recordings, genres, and the genre vote links between them — into a clean, app-owned schema. Every row keeps its MusicBrainz MBID for later Spotify matching and dump refreshes.
+
+```sh
+dotnet run --project src/MusiQL.Etl -- load --sample   # load the checked-in dev fixture
+dotnet run --project src/MusiQL.Etl -- download        # fetch the latest real dump tarballs
+dotnet run --project src/MusiQL.Etl -- load            # load a downloaded dump
+```
+
+`load` applies EF migrations, streams each dump file into a `staging` schema with Npgsql binary COPY, reshapes it into the catalog with set-based SQL, then swaps the result into `catalog` in a single transaction — readers keep seeing the previous catalog until the swap commits, so a refresh has no visible downtime. Files are streamed line by line and never held in memory, so peak memory is flat regardless of dump size. The connection string resolves from `--connection`, then the `MUSIQL_CONNECTION` environment variable, then the local dev database on port 5442.
+
+`--sample` loads `src/MusiQL.Etl/sample`, a hand-built mini-dump of ~50 artists across genres and eras (including the 1990s grunge catalog behind the canonical playlist example). Development and tests use it so the multi-gigabyte real dump is never required.
+
+### Filtering rules
+
+The catalog is a deliberately trimmed view of MusicBrainz. A row survives only when:
+
+- **Official releases only.** A release is kept only when its MusicBrainz status is *Official*. Promos, bootlegs, and pseudo-releases are dropped.
+- **No orphan albums.** A release group is kept only if it has at least one official release. Its first-release year and primary type come from MusicBrainz.
+- **No artists without releases.** An artist is kept only if it is the credited artist of a surviving release group, release, or recording.
+- **Recordings resolved to an album.** A recording is kept only if it appears on an official release. Each recording MBID becomes exactly one catalog row; its album and year are taken from the earliest official release group it appears on, so the same recording across many releases collapses to a single track.
+- **Genres are tag-derived.** MusicBrainz genres are the tags whose names match a genre, so each artist/album/recording genre link carries that tag's vote count. Tags that are not genres are ignored.
+
+### Observed sizes and runtimes
+
+| Source | Compressed size | Load |
+| --- | --- | --- |
+| Sample fixture | a few KB | ~2 s including migrations |
+| `mbdump.tar.bz2` (core tables) | ~7 GB | download-bound; not run in this environment |
+| `mbdump-derived.tar.bz2` (tags, meta) | ~480 MB | download-bound; not run in this environment |
+
+The download command's server contract (latest-export pointer, checksum manifest, tarball URLs) is verified against the live MetaBrainz mirror; a full real load was not executed here to conserve bandwidth.
