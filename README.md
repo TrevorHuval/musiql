@@ -2,7 +2,7 @@
 
 MusiQL is a web app where a playlist is a saved query rather than a hand-curated list. You describe what you want — say, grunge and alternative rock from 1990 to 2004, minus Nirvana — and MusiQL stores that definition and re-runs it against a music catalog every time the playlist is opened, so the result stays live as the catalog grows. There are two ways to write a query: a visual builder for casual use, and an advanced mode where fluent users write MQL, a small purpose-built query language. Users never write raw SQL; MQL is parsed to an AST on the server, validated against a whitelisted schema, and compiled to parameterized SQL.
 
-The catalog is built from MusicBrainz PostgreSQL dumps, trimmed by an ETL pipeline into an app-owned schema holding just what queries need: artists, releases, recordings, genres, and dates. The backend is an ASP.NET Core (.NET 10) API over PostgreSQL; the frontend is React (Vite + TypeScript). Later phases add authentication, playlist management, and export to Spotify. This repository currently contains the Phase 1 scaffold: the solution layout, a Dockerized Postgres for development, the React app, and a health-check endpoint wired end to end.
+The catalog is built from MusicBrainz PostgreSQL dumps, trimmed by an ETL pipeline into an app-owned schema holding just what queries need: artists, releases, recordings, genres, and dates. The backend is an ASP.NET Core (.NET 10) API over PostgreSQL; the frontend is React (Vite + TypeScript). Export to Spotify arrives in a later phase. The backend now carries the catalog ETL, the MQL query engine, and an authenticated REST API — registration and login with JWT, owner-scoped playlist management, and query preview/execution — while the frontend is still the Phase 1 health-check scaffold.
 
 ## Running locally
 
@@ -35,6 +35,18 @@ Open http://localhost:5173 — the page reports API and database health. `npm te
 | `src/MusiQL.Etl` | MusicBrainz catalog ETL (console) |
 | `tests/MusiQL.Tests` | xUnit backend tests |
 | `frontend` | React + Vite + TypeScript client |
+
+## API
+
+The API is authenticated with JWT bearer tokens (ASP.NET Identity, users stored in the `app` schema). Register or log in — `POST /api/auth/register`, `POST /api/auth/login` — to get an access token, then call the protected endpoints with `Authorization: Bearer <token>`. Refresh tokens rotate on `POST /api/auth/refresh`.
+
+- Playlists are stored MQL definitions ("live views"): CRUD under `/api/playlists`, scoped to the owner, with `GET /api/playlists/{id}/tracks` executing the definition.
+- `POST /api/query/preview` validates and runs an ad-hoc MQL string, returning a result page or positional parse/validation errors the builder renders inline.
+- `/api/catalog/{genres,artists,fields}` back the visual builder with autocomplete and schema metadata.
+
+Errors are problem+json, preview/execute are rate limited, and CORS allows the Vite dev origin. In Development the `app` schema migrates on startup; catalog data comes from `etl load --sample`. Point `ConnectionStrings:Query` at the read-only `musiql_query` role in production (see `src/MusiQL.Data/Sql/query_role.sql`).
+
+**TODO — email verification.** Registration does not verify email addresses yet; accounts are usable immediately after `POST /api/auth/register`.
 
 ## Catalog ETL
 
