@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MusiQL.Core\MusiQL.Core.csproj" />
+    <ProjectReference Include="..\MusiQL.Data\MusiQL.Data.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,49 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# .NET
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+project.lock.json
+*.nupkg
+*.snupkg
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# Node / frontend
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.local
+.vite/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets and local environment
+.env
+.env.local
+.env.*.local
+
+# Development markdown — notes and design docs stay local, never committed
+*.md
+!/README.md
+docs/
+CLAUDE.md
