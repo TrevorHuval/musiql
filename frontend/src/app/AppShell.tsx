@@ -21,6 +21,9 @@ export function AppShell() {
         </Link>
 
         <div className={styles.actions}>
+          <Link to="/settings" className={styles.navIcon} aria-label="Settings" title="Settings">
+            <Icon name="settings" size={17} />
+          </Link>
           <IconButton
             icon={theme === 'dark' ? 'sun' : 'moon'}
             label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}

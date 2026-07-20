@@ -52,6 +52,25 @@
   gap: 8px;
 }
 
+.navIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  color: var(--paper-3);
+  border: 1px solid transparent;
+  transition:
+    color 120ms var(--ease-out),
+    background-color 120ms var(--ease-out);
+}
+
+.navIcon:hover {
+  color: var(--paper);
+  background: var(--raised);
+}
+
 .divider {
   width: 1px;
   height: 20px;
