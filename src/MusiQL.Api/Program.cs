@@ -114,6 +114,10 @@ app.UseHttpLogging();
 if (app.Environment.IsDevelopment())
 {
     app.UseCors(devCors);
+}
+
+if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Startup:MigrateAppSchema"))
+{
     using var scope = app.Services.CreateScope();
     await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
 }

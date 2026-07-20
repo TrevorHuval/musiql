@@ -17,5 +17,38 @@ services:
       timeout: 5s
       retries: 5
 
+  # Production-ish local stack: published API + built frontend behind nginx,
+  # sharing the db above. Start with: docker compose --profile prod up --build
+  api:
+    build:
+      context: .
+      dockerfile: src/MusiQL.Api/Dockerfile
+    container_name: musiql-api
+    profiles: ["prod"]
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Startup__MigrateAppSchema: "true"
+      ConnectionStrings__MusiQL: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY}"
+      Spotify__ClientId: "${SPOTIFY_CLIENT_ID:-}"
+      Spotify__TokenEncryptionKey: "${SPOTIFY_TOKEN_ENCRYPTION_KEY:-}"
+      Spotify__RedirectUri: "${SPOTIFY_REDIRECT_URI:-http://127.0.0.1:8088/settings/spotify/callback}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: musiql-web
+    profiles: ["prod"]
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8088}:80"
+    depends_on:
+      - api
+
 volumes:
   musiql-pgdata:

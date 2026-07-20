@@ -1,0 +1,9 @@
+**/bin/
+**/obj/
+**/node_modules/
+frontend/dist/
+.git/
+.vs/
+.claude/
+.mbdump-cache/
+docs/
