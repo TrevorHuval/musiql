@@ -1,0 +1,178 @@
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--paper-2);
+  max-width: 460px;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.list > li + li .row {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  transition: background-color 130ms var(--ease-out);
+}
+
+.row:hover {
+  background: color-mix(in srgb, var(--panel) 60%, var(--paper) 4%);
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.rowText {
+  min-width: 0;
+}
+
+.rowTitleLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rowName {
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--paper);
+}
+
+.rowDesc {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--paper-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowMql {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--paper-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.rowMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.rowTime {
+  font-size: 12px;
+  color: var(--paper-4);
+  white-space: nowrap;
+}
+
+.rowActions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 130ms var(--ease-out);
+}
+
+.row:hover .rowActions,
+.row:focus-within .rowActions {
+  opacity: 1;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 72px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+}
+
+.emptyMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  color: var(--signal);
+  background: var(--signal-bg);
+  border: 1px solid var(--signal-line);
+  margin-bottom: 4px;
+}
+
+.emptyTitle {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--paper-2);
+  max-width: 400px;
+}
+
+.empty button {
+  margin-top: 8px;
+}
+
+@media (max-width: 560px) {
+  .rowActions {
+    opacity: 1;
+  }
+}
