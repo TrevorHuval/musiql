@@ -1,0 +1,57 @@
+.root {
+  position: relative;
+  z-index: 60;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 6, 4, 0.62);
+  backdrop-filter: blur(2px);
+  transition: opacity 200ms var(--ease-out);
+}
+
+.backdrop[data-closed] {
+  opacity: 0;
+}
+
+.positioner {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-pop);
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.panel[data-closed] {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.description {
+  margin: 7px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--paper-2);
+}

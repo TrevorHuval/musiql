@@ -1,0 +1,182 @@
+:root {
+  color-scheme: dark;
+
+  --vinyl: #16130f;
+  --panel: #1e1a15;
+  --raised: #262118;
+  --inset: #100e0b;
+
+  --paper: #f2ece0;
+  --paper-2: #b3aa9a;
+  --paper-3: #8a8175;
+  --paper-4: #6b6357;
+
+  --line: rgba(242, 236, 224, 0.09);
+  --line-2: rgba(242, 236, 224, 0.14);
+  --line-3: rgba(242, 236, 224, 0.2);
+
+  --signal: #e6a24a;
+  --signal-hi: #f0b968;
+  --signal-bg: rgba(230, 162, 74, 0.12);
+  --signal-line: rgba(230, 162, 74, 0.34);
+
+  --clay: #d9614b;
+  --clay-hi: #ef8a76;
+  --clay-bg: rgba(217, 97, 75, 0.13);
+  --clay-line: rgba(217, 97, 75, 0.36);
+
+  --valid: #7bab84;
+  --valid-hi: #9ccaa4;
+  --valid-bg: rgba(123, 171, 132, 0.13);
+
+  --syn-entity: var(--signal-hi);
+  --syn-kw: var(--paper-3);
+  --syn-field: var(--paper);
+  --syn-str: #9ec9a6;
+  --syn-num: #e0b968;
+  --syn-op: var(--paper-2);
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+
+  --font-sans: "Space Grotesk", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --shadow-pop: none;
+  --shadow-card: none;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --vinyl: #f4efe6;
+  --panel: #fbf7ef;
+  --raised: #fffdf8;
+  --inset: #ece5d8;
+
+  --paper: #221e18;
+  --paper-2: #5b5348;
+  --paper-3: #837a6c;
+  --paper-4: #a99f8d;
+
+  --line: rgba(40, 30, 15, 0.1);
+  --line-2: rgba(40, 30, 15, 0.16);
+  --line-3: rgba(40, 30, 15, 0.24);
+
+  --signal: #c07526;
+  --signal-hi: #9a5f1c;
+  --signal-bg: rgba(192, 117, 38, 0.12);
+  --signal-line: rgba(192, 117, 38, 0.36);
+
+  --clay: #bd4e38;
+  --clay-hi: #9d3f2c;
+  --clay-bg: rgba(189, 78, 56, 0.11);
+  --clay-line: rgba(189, 78, 56, 0.34);
+
+  --valid: #4f8a5c;
+  --valid-hi: #3d7049;
+  --valid-bg: rgba(79, 138, 92, 0.12);
+
+  --syn-str: #3f7a4e;
+  --syn-num: #9a6a12;
+
+  --shadow-pop:
+    0 0 0 1px rgba(40, 30, 15, 0.06), 0 8px 24px rgba(40, 30, 15, 0.12),
+    0 2px 6px rgba(40, 30, 15, 0.08);
+  --shadow-card:
+    0 0 0 1px rgba(40, 30, 15, 0.05), 0 1px 2px -1px rgba(40, 30, 15, 0.08),
+    0 2px 6px rgba(40, 30, 15, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--vinyl);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--signal-bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-3) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--line-3);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--paper-4);
+  background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

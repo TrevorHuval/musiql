@@ -1,0 +1,119 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: 36px;
+  padding: 0 9px 0 11px;
+  background: var(--raised);
+  color: var(--paper);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 130ms var(--ease-out),
+    box-shadow 130ms var(--ease-out);
+}
+
+.trigger[data-size='sm'] {
+  height: 30px;
+  font-size: 12.5px;
+}
+
+.trigger:hover {
+  border-color: var(--line-3);
+}
+
+.trigger[data-open],
+.trigger:focus-visible {
+  border-color: var(--signal-line);
+  box-shadow: 0 0 0 3px var(--signal-bg);
+  outline: none;
+}
+
+.triggerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerIcon {
+  color: var(--paper-3);
+  flex-shrink: 0;
+}
+
+.menu {
+  z-index: 40;
+  min-width: max(var(--button-width, 0px), var(--input-width, 0px), 150px);
+  max-height: 280px;
+  margin-top: 5px;
+  padding: 5px;
+  background: var(--raised);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-pop);
+  overflow: auto;
+  transform-origin: top;
+  transition:
+    opacity 140ms var(--ease-out),
+    transform 140ms var(--ease-out);
+}
+
+.menu[data-closed] {
+  opacity: 0;
+  transform: scale(0.97);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: var(--r-sm);
+  font-size: 13.5px;
+  color: var(--paper-2);
+  cursor: pointer;
+}
+
+.option[data-focus] {
+  background: color-mix(in srgb, var(--raised) 60%, var(--paper) 8%);
+  color: var(--paper);
+}
+
+.option[data-selected] {
+  color: var(--paper);
+}
+
+.empty {
+  padding: 10px 9px;
+  font-size: 13px;
+  color: var(--paper-3);
+}
+
+.comboWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.comboToggle {
+  position: absolute;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: var(--paper-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.comboToggle:hover {
+  color: var(--paper);
+}
