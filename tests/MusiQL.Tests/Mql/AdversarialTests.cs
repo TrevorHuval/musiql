@@ -1,5 +1,6 @@
 using MusiQL.Core.Mql;
 using MusiQL.Core.Mql.Compilation;
+using MusiQL.Core.Mql.Diagnostics;
 
 namespace MusiQL.Tests.Mql;
 
@@ -17,15 +18,47 @@ public class AdversarialTests
     [InlineData("tracks where artist = 'x'")]
     [InlineData("tracks where year = 1990 or 1=1")]
     [InlineData("tracks where pg_sleep(10) > 0")]
+    [InlineData("tracks where year = 1990); drop table catalog.artist --")]
+    [InlineData("tracks order by (select mbid from catalog.artist)")]
+    [InlineData("tracks order by year; delete from catalog.artist")]
+    [InlineData("tracks where artist = \"x\" \\g")]
+    [InlineData("tracks where year = 0x1F")]
+    [InlineData("tracks limit 10 offset 5")]
+    [InlineData("tracks where artist = `x`")]
     public void Injection_attempts_never_compile(string input)
     {
         Assert.False(Engine.Compile(input, CompileContext.Default).Success);
+    }
+
+    [Theory]
+    [InlineData("tracks where year = 99999999999999999999")]
+    [InlineData("tracks limit 99999999999999999999")]
+    public void Out_of_range_numbers_fail_cleanly(string input)
+    {
+        var result = Engine.Compile(input, CompileContext.Default);
+        Assert.False(result.Success);
+        Assert.Equal(MqlErrorCode.NumberOutOfRange, result.Errors[0].Code);
+    }
+
+    [Fact]
+    public void From_library_without_a_user_is_rejected()
+    {
+        var result = Engine.Compile("tracks from library", CompileContext.Default);
+        Assert.False(result.Success);
+        Assert.Equal(MqlErrorCode.LibraryUserRequired, result.Errors[0].Code);
     }
 
     [Fact]
     public void Homoglyph_entity_never_compiles()
     {
         var input = (char)0x0430 + "rtists where year = 1990";
+        Assert.False(Engine.Compile(input, CompileContext.Default).Success);
+    }
+
+    [Fact]
+    public void Homoglyph_field_never_compiles()
+    {
+        var input = "tracks where " + (char)0x0430 + "rtist = \"Nirvana\"";
         Assert.False(Engine.Compile(input, CompileContext.Default).Success);
     }
 
