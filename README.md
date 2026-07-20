@@ -6,13 +6,42 @@ The catalog is built from MusicBrainz PostgreSQL dumps, trimmed by an ETL pipeli
 
 ## Running locally
 
-Prerequisites: .NET 10 SDK, Node 20+, Docker.
+Prerequisites: [.NET 10 SDK](https://dotnet.microsoft.com/download), [Node 20+](https://nodejs.org), and [Docker](https://www.docker.com/products/docker-desktop). Make sure Docker is running before you start.
+
+### Quick start
+
+One script creates `.env`, starts PostgreSQL, loads the sample catalog, runs the backend tests, and installs the frontend dependencies:
 
 ```sh
-cp .env.example .env          # dev database credentials
-docker compose up -d          # Postgres 17 on localhost:5442
-dotnet test                   # backend tests
-dotnet run --project src/MusiQL.Api   # API on http://localhost:5272
+# Windows (PowerShell)
+./scripts/setup.ps1
+
+# macOS / Linux
+./scripts/setup.sh
+```
+
+When it finishes, start the two dev servers in separate terminals:
+
+```sh
+dotnet run --project src/MusiQL.Api    # API on http://localhost:5272
+```
+
+```sh
+cd frontend && npm run dev             # app on http://127.0.0.1:5173
+```
+
+Open http://127.0.0.1:5173, register an account, and build a playlist. The sample catalog includes the 1990s grunge data behind the canonical example — try `tracks where genre = "grunge" and year between 1990 and 2004 and artist != "Nirvana"` in advanced mode. Use `127.0.0.1` rather than `localhost` so the Spotify redirect works.
+
+### Manual setup
+
+The script just automates these steps:
+
+```sh
+cp .env.example .env                                   # dev database credentials
+docker compose up -d db                                # Postgres 17 on localhost:5442
+dotnet run --project src/MusiQL.Etl -- load --sample   # load the sample catalog
+dotnet test                                            # backend tests
+dotnet run --project src/MusiQL.Api                    # API on http://localhost:5272
 ```
 
 In a second terminal:
@@ -20,10 +49,10 @@ In a second terminal:
 ```sh
 cd frontend
 npm install
-npm run dev                   # app on http://localhost:5173
+npm run dev                   # app on http://127.0.0.1:5173
 ```
 
-Open http://localhost:5173 — the page reports API and database health. `npm test` runs the frontend test suite.
+`npm test` runs the frontend test suite.
 
 ### Production-ish stack
 
@@ -110,3 +139,7 @@ The catalog is a deliberately trimmed view of MusicBrainz. A row survives only w
 | `mbdump-derived.tar.bz2` (tags, meta) | ~480 MB | download-bound; not run in this environment |
 
 The download command's server contract (latest-export pointer, checksum manifest, tarball URLs) is verified against the live MetaBrainz mirror; a full real load was not executed here to conserve bandwidth.
+
+## License
+
+Copyright © 2026 Trevor Huval. Licensed under the [GNU General Public License v3.0](LICENSE). You may use, study, and modify this code, but any distributed derivative must also be released under the GPL-3.0. Catalog data originates from [MusicBrainz](https://musicbrainz.org) under its own licensing.
