@@ -1,5 +1,6 @@
 using MusiQL.Api.Auth;
 using MusiQL.Api.Contracts;
+using MusiQL.Api.Spotify;
 using MusiQL.Core.Mql.Diagnostics;
 
 namespace MusiQL.Api.Errors;
@@ -44,4 +45,34 @@ public static class ApiProblems
         title: $"{what} not found",
         statusCode: StatusCodes.Status404NotFound,
         type: Base + "not-found");
+
+    public static IResult Spotify(Exception exception) => exception switch
+    {
+        SpotifyNotConfiguredException => Results.Problem(
+            title: "Spotify integration is not configured",
+            detail: "The server is missing the Spotify client id or token encryption key.",
+            statusCode: StatusCodes.Status503ServiceUnavailable,
+            type: Base + "spotify-unconfigured"),
+        SpotifyNotConnectedException => Results.Problem(
+            title: "Spotify account not connected",
+            detail: "Connect a Spotify account before running this action.",
+            statusCode: StatusCodes.Status409Conflict,
+            type: Base + "spotify-not-connected"),
+        SpotifyAuthStateException => Results.Problem(
+            title: "Invalid Spotify authorization",
+            detail: "The authorization request expired or did not match. Start the connection again.",
+            statusCode: StatusCodes.Status400BadRequest,
+            type: Base + "spotify-auth-state"),
+        ExportNotSupportedException e => Results.Problem(
+            title: "Playlist cannot be exported",
+            detail: e.Message,
+            statusCode: StatusCodes.Status422UnprocessableEntity,
+            type: Base + "export-unsupported"),
+        SpotifyApiException e => Results.Problem(
+            title: "Spotify request failed",
+            detail: e.Message,
+            statusCode: StatusCodes.Status502BadGateway,
+            type: Base + "spotify-upstream"),
+        _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError)
+    };
 }
