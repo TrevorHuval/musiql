@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using MusiQL.Api.Auth;
 using MusiQL.Api.Contracts;
@@ -19,6 +20,7 @@ public static class PlaylistEndpoints
         group.MapPut("/{id:guid}", Update);
         group.MapDelete("/{id:guid}", Delete);
         group.MapGet("/{id:guid}/tracks", Tracks).RequireRateLimiting(RateLimits.Query);
+        group.MapGet("/{id:guid}/export/m3u", ExportM3u).RequireRateLimiting(RateLimits.Query);
         group.MapPost("/{id:guid}/export/spotify", ExportToSpotify).RequireRateLimiting(RateLimits.Query);
         return group;
     }
@@ -138,6 +140,38 @@ public static class PlaylistEndpoints
         var result = await snapshots.GetPageAsync(
             playlist, compilation.Query!, page ?? 1, pageSize ?? QueryService.DefaultPageSize, ct);
         return Results.Ok(result);
+    }
+
+    private static async Task<IResult> ExportM3u(
+        Guid id, ClaimsPrincipal principal, AppDbContext db, QueryService query, CancellationToken ct)
+    {
+        var playlist = await Owned(db, principal, id, ct);
+        if (playlist is null)
+        {
+            return ApiProblems.NotFound("Playlist");
+        }
+
+        var compilation = query.Compile(playlist.MqlText, playlist.OwnerId);
+        if (!compilation.Success)
+        {
+            return ApiProblems.MqlValidation(compilation.Errors);
+        }
+
+        if (compilation.Query!.Entity != "tracks")
+        {
+            return ApiProblems.ExportUnsupported("An M3U file can only be built from a track playlist.");
+        }
+
+        var result = await query.ExecuteAsync(compilation.Query, ct);
+        var m3u = Encoding.UTF8.GetBytes(M3uExport.Build(result));
+        return Results.File(m3u, "audio/x-mpegurl", $"{FileName(playlist.Name)}.m3u8");
+    }
+
+    private static string FileName(string name)
+    {
+        var slug = new string(name.Trim().Select(c => char.IsLetterOrDigit(c) ? c : '-').ToArray())
+            .Trim('-');
+        return slug.Length == 0 ? "playlist" : slug;
     }
 
     private static async Task<IResult> ExportToSpotify(

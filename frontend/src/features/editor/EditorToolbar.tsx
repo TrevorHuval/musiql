@@ -17,6 +17,8 @@ interface EditorToolbarProps {
   onSave: () => void
   onRename?: () => void
   onExport?: () => void
+  onDownloadM3u?: () => void
+  downloadingM3u?: boolean
 }
 
 export function EditorToolbar({
@@ -29,6 +31,8 @@ export function EditorToolbar({
   onSave,
   onRename,
   onExport,
+  onDownloadM3u,
+  downloadingM3u,
 }: EditorToolbarProps) {
   return (
     <div className={styles.toolbar}>
@@ -55,6 +59,14 @@ export function EditorToolbar({
             { value: 'advanced', label: 'Advanced', icon: 'code' },
           ]}
         />
+        {onDownloadM3u && (
+          <Button variant="secondary" onClick={onDownloadM3u} loading={downloadingM3u}>
+            <span className={styles.exportLabel}>
+              <Icon name="download" size={15} />
+              M3U
+            </span>
+          </Button>
+        )}
         {onExport && (
           <Button variant="secondary" onClick={onExport}>
             <span className={styles.exportLabel}>

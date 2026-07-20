@@ -46,6 +46,12 @@ public static class ApiProblems
         statusCode: StatusCodes.Status404NotFound,
         type: Base + "not-found");
 
+    public static IResult ExportUnsupported(string detail) => Results.Problem(
+        title: "Playlist cannot be exported",
+        detail: detail,
+        statusCode: StatusCodes.Status422UnprocessableEntity,
+        type: Base + "export-unsupported");
+
     public static IResult Spotify(Exception exception) => exception switch
     {
         SpotifyNotConfiguredException => Results.Problem(

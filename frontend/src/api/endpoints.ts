@@ -1,4 +1,4 @@
-import { apiRequest } from './client'
+import { apiDownload, apiRequest, type DownloadedFile } from './client'
 import type {
   Credentials,
   ExportResult,
@@ -34,6 +34,8 @@ export const playlists = {
     apiRequest<QueryPage>(`/api/playlists/${id}/tracks?page=${page}&pageSize=${pageSize}`),
   exportSpotify: (id: string, rematch = false) =>
     apiRequest<ExportResult>(`/api/playlists/${id}/export/spotify?rematch=${rematch}`, { method: 'POST' }),
+  exportM3u: (id: string, fallbackName: string): Promise<DownloadedFile> =>
+    apiDownload(`/api/playlists/${id}/export/m3u`, fallbackName),
 }
 
 export const spotify = {

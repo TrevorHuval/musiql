@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ApiError } from '../../api/client'
 import { problemToMessage } from '../../api/problem'
-import { queryApi, useSchema, useUpdatePlaylist, usePlaylist } from '../../api/queries'
+import { queryApi, useExportM3u, useSchema, useUpdatePlaylist, usePlaylist } from '../../api/queries'
 import { Callout } from '../../components/ui/Callout'
 import { Icon } from '../../components/ui/Icon'
 import { Spinner } from '../../components/ui/misc'
@@ -81,6 +81,7 @@ interface EditorProps {
 function Editor({ schema, playlistId, initialMql, playlistName, playlistDescription }: EditorProps) {
   const isNew = playlistId === undefined
   const update = useUpdatePlaylist(playlistId ?? '')
+  const exportM3u = useExportM3u(playlistId ?? '', playlistName ?? 'playlist')
 
   const initial = useMemo(() => deriveInitial(initialMql), [initialMql])
   const [mode, setMode] = useState<EditorMode>(initial.mode)
@@ -174,7 +175,17 @@ function Editor({ schema, playlistId, initialMql, playlistName, playlistDescript
         onSave={handleSave}
         onRename={isNew ? undefined : () => setRenameOpen(true)}
         onExport={isNew ? undefined : () => setExportOpen(true)}
+        onDownloadM3u={isNew ? undefined : () => exportM3u.mutate()}
+        downloadingM3u={exportM3u.isPending}
       />
+
+      {exportM3u.isError && (
+        <div className={styles.switchNote}>
+          <Callout tone="clay" icon="x" title="Couldn’t build the M3U file">
+            {problemToMessage(exportM3u.error)}
+          </Callout>
+        </div>
+      )}
 
       {switchError && (
         <div className={styles.switchNote}>

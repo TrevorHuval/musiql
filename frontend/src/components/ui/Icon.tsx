@@ -25,6 +25,7 @@ export type IconName =
   | 'link'
   | 'refresh'
   | 'external'
+  | 'download'
 
 const paths: Record<IconName, ReactElement> = {
   plus: <path d="M12 5v14M5 12h14" />,
@@ -64,6 +65,7 @@ const paths: Record<IconName, ReactElement> = {
   external: (
     <path d="M14 5h5v5M19 5l-8 8M12 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
   ),
+  download: <path d="M12 4v11M8 11l4 4 4-4M5 20h14" />,
 }
 
 interface IconProps extends SVGProps<SVGSVGElement> {

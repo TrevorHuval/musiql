@@ -80,7 +80,11 @@ function problemMessage(status: number, problem: ProblemDetails | null): string 
   return `Request failed (${status})`
 }
 
-async function send<T>(path: string, options: RequestOptions, retrying: boolean): Promise<T> {
+async function authorizedFetch(
+  path: string,
+  options: RequestOptions,
+  retrying: boolean,
+): Promise<Response> {
   const { method = 'GET', body, auth = true, signal } = options
   const headers: Record<string, string> = {}
   if (body !== undefined) headers['Content-Type'] = 'application/json'
@@ -99,7 +103,7 @@ async function send<T>(path: string, options: RequestOptions, retrying: boolean)
 
   if (response.status === 401 && auth && !retrying) {
     const refreshed = await refreshTokens()
-    if (refreshed) return send<T>(path, options, true)
+    if (refreshed) return authorizedFetch(path, options, true)
   }
 
   if (!response.ok) {
@@ -108,10 +112,30 @@ async function send<T>(path: string, options: RequestOptions, retrying: boolean)
     throw new ApiError(response.status, problemMessage(response.status, problem), problem)
   }
 
+  return response
+}
+
+export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await authorizedFetch(path, options, false)
   if (response.status === 204) return undefined as T
   return (await response.json()) as T
 }
 
-export function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  return send<T>(path, options, false)
+export interface DownloadedFile {
+  blob: Blob
+  filename: string
+}
+
+export async function apiDownload(path: string, fallbackName: string): Promise<DownloadedFile> {
+  const response = await authorizedFetch(path, {}, false)
+  const blob = await response.blob()
+  return { blob, filename: filenameFrom(response.headers.get('content-disposition'), fallbackName) }
+}
+
+function filenameFrom(disposition: string | null, fallback: string): string {
+  if (!disposition) return fallback
+  const encoded = /filename\*=(?:UTF-8'')?([^;]+)/i.exec(disposition)
+  if (encoded) return decodeURIComponent(encoded[1].replace(/"/g, '').trim())
+  const plain = /filename="?([^";]+)"?/i.exec(disposition)
+  return plain ? plain[1].trim() : fallback
 }

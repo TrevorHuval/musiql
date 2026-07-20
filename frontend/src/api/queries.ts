@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { catalog, playlists, spotify, type PreviewInput } from './endpoints'
 import { query as queryApi } from './endpoints'
+import { saveBlob } from '../lib/download'
 import type { PlaylistInput } from './types'
 
 export const keys = {
@@ -85,6 +86,15 @@ export function useSyncLibrary() {
 
 export function useExportPlaylist(id: string) {
   return useMutation({ mutationFn: (rematch: boolean) => playlists.exportSpotify(id, rematch) })
+}
+
+export function useExportM3u(id: string, name: string) {
+  return useMutation({
+    mutationFn: async () => {
+      const file = await playlists.exportM3u(id, `${name || 'playlist'}.m3u8`)
+      saveBlob(file.blob, file.filename)
+    },
+  })
 }
 
 export { queryApi, spotify }
