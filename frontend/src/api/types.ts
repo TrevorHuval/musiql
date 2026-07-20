@@ -75,6 +75,46 @@ export interface SchemaResponse {
   entities: SchemaEntity[]
 }
 
+export interface SpotifyStatus {
+  connected: boolean
+  displayName: string | null
+  spotifyUserId: string | null
+  connectedAt: string | null
+  librarySyncedAt: string | null
+  librarySavedCount: number
+  libraryMatchedCount: number
+}
+
+export interface SpotifyConnectResponse {
+  authorizeUrl: string
+}
+
+export interface UnmatchedTrack {
+  title: string
+  artist: string
+  year: number | null
+  confidence: number
+}
+
+export interface ExportResult {
+  playlistName: string
+  spotifyPlaylistId: string
+  spotifyUrl: string
+  trackCount: number
+  matchedCount: number
+  totalCount: number
+  unmatched: UnmatchedTrack[]
+  exportedAt: string
+}
+
+export interface LibrarySyncResult {
+  savedCount: number
+  matchedCount: number
+  unmatchedCount: number
+  libraryCount: number
+  syncedAt: string
+}
+
 export interface MqlError {
   code: string
   message: string

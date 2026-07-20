@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { catalog, playlists, type PreviewInput } from './endpoints'
+import { catalog, playlists, spotify, type PreviewInput } from './endpoints'
 import { query as queryApi } from './endpoints'
 import type { PlaylistInput } from './types'
 
@@ -10,6 +10,7 @@ export const keys = {
   tracks: (id: string, page: number, pageSize: number) =>
     ['playlists', id, 'tracks', page, pageSize] as const,
   preview: (input: PreviewInput) => ['preview', input] as const,
+  spotifyStatus: ['spotify', 'status'] as const,
 }
 
 export function useSchema() {
@@ -62,4 +63,28 @@ export function usePlaylistTracks(id: string, page: number, pageSize: number) {
   })
 }
 
-export { queryApi }
+export function useSpotifyStatus() {
+  return useQuery({ queryKey: keys.spotifyStatus, queryFn: spotify.status })
+}
+
+export function useDisconnectSpotify() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: spotify.disconnect,
+    onSuccess: () => client.invalidateQueries({ queryKey: keys.spotifyStatus }),
+  })
+}
+
+export function useSyncLibrary() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: spotify.syncLibrary,
+    onSuccess: () => client.invalidateQueries({ queryKey: keys.spotifyStatus }),
+  })
+}
+
+export function useExportPlaylist(id: string) {
+  return useMutation({ mutationFn: (rematch: boolean) => playlists.exportSpotify(id, rematch) })
+}
+
+export { queryApi, spotify }

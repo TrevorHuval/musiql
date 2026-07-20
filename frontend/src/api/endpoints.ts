@@ -1,10 +1,14 @@
 import { apiRequest } from './client'
 import type {
   Credentials,
+  ExportResult,
+  LibrarySyncResult,
   Playlist,
   PlaylistInput,
   QueryPage,
   SchemaResponse,
+  SpotifyConnectResponse,
+  SpotifyStatus,
   Suggestion,
   TokenPair,
 } from './types'
@@ -28,6 +32,17 @@ export const playlists = {
   remove: (id: string) => apiRequest<void>(`/api/playlists/${id}`, { method: 'DELETE' }),
   tracks: (id: string, page: number, pageSize: number) =>
     apiRequest<QueryPage>(`/api/playlists/${id}/tracks?page=${page}&pageSize=${pageSize}`),
+  exportSpotify: (id: string, rematch = false) =>
+    apiRequest<ExportResult>(`/api/playlists/${id}/export/spotify?rematch=${rematch}`, { method: 'POST' }),
+}
+
+export const spotify = {
+  status: () => apiRequest<SpotifyStatus>('/api/spotify/status'),
+  connect: () => apiRequest<SpotifyConnectResponse>('/api/spotify/connect', { method: 'POST' }),
+  callback: (state: string, code: string) =>
+    apiRequest<SpotifyStatus>('/api/spotify/callback', { method: 'POST', body: { state, code } }),
+  disconnect: () => apiRequest<void>('/api/spotify/disconnect', { method: 'POST' }),
+  syncLibrary: () => apiRequest<LibrarySyncResult>('/api/spotify/library/sync', { method: 'POST' }),
 }
 
 export interface PreviewInput {

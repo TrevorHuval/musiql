@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Icon, type IconName } from './Icon'
 import styles from './Callout.module.css'
 
-type Tone = 'clay' | 'signal' | 'neutral'
+type Tone = 'clay' | 'signal' | 'neutral' | 'valid'
 
 interface CalloutProps {
   tone?: Tone
