@@ -1,0 +1,252 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--paper-3);
+}
+
+.sourceRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: flex;
+  gap: 10px;
+}
+
+.rail {
+  flex-shrink: 0;
+  width: 52px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding-top: 8px;
+}
+
+.railLabel {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper-4);
+}
+
+.combinator {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--signal-line);
+  background: var(--signal-bg);
+  color: var(--signal-hi);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: filter 120ms var(--ease-out);
+}
+
+.combinator:hover {
+  filter: brightness(1.12);
+}
+
+.itemBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.condition {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.conditionControls {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.conditionValue {
+  flex: 1;
+  min-width: 120px;
+}
+
+.conditionRemove {
+  flex-shrink: 0;
+}
+
+.betweenRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.betweenAnd {
+  font-size: 12.5px;
+  color: var(--paper-3);
+  flex-shrink: 0;
+}
+
+.valueList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.valueListRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.valueRemove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  border: none;
+  background: transparent;
+  color: var(--paper-4);
+  cursor: pointer;
+}
+
+.valueRemove:hover {
+  color: var(--clay-hi);
+  background: var(--clay-bg);
+}
+
+.subGroup {
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--panel) 50%, var(--inset) 50%);
+  padding: 10px;
+}
+
+.subGroupHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.subGroupLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper-3);
+}
+
+.subGroupHint {
+  font-size: 12px;
+  color: var(--paper-4);
+}
+
+.subGroupRemove {
+  margin-left: auto;
+}
+
+.addRow {
+  display: flex;
+  gap: 8px;
+  padding-left: 62px;
+}
+
+.group[data-root] > .addRow {
+  padding-left: 62px;
+}
+
+.subGroup .addRow {
+  padding-left: 62px;
+}
+
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--r-sm);
+  border: 1px dashed var(--line-3);
+  background: transparent;
+  color: var(--paper-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 120ms var(--ease-out),
+    color 120ms var(--ease-out);
+}
+
+.addButton:hover {
+  color: var(--paper);
+  border-color: var(--signal-line);
+}
+
+.sortList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sortRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.limitRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.limitInput {
+  width: 92px;
+  font-family: var(--font-mono);
+}
+
+.limitHint {
+  font-size: 12.5px;
+  color: var(--paper-3);
+}
+
+@media (max-width: 560px) {
+  .conditionControls {
+    flex-direction: column;
+  }
+}
