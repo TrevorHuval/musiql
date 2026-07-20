@@ -67,9 +67,11 @@ builder.Services
 builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton(MqlEngine.CreateDefault());
-builder.Services.Configure<QueryOptions>(options =>
+builder.Services.Configure<QueryOptions>(builder.Configuration.GetSection("Query"));
+builder.Services.PostConfigure<QueryOptions>(options =>
     options.ConnectionString = builder.Configuration.GetConnectionString("Query") ?? connectionString);
 builder.Services.AddScoped<QueryService>();
+builder.Services.AddScoped<PlaylistSnapshotService>();
 
 builder.Services.AddSpotifyIntegration(builder.Configuration);
 

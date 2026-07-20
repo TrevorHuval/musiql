@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<Playlist> Playlists => Set<Playlist>();
+    public DbSet<PlaylistSnapshot> PlaylistSnapshots => Set<PlaylistSnapshot>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<SpotifyAccount> SpotifyAccounts => Set<SpotifyAccount>();
     public DbSet<SpotifyAuthState> SpotifyAuthStates => Set<SpotifyAuthState>();
@@ -40,6 +41,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(p => p.MqlText).HasMaxLength(8000).IsRequired();
             e.HasIndex(p => new { p.OwnerId, p.Name });
             e.HasOne<AppUser>().WithMany().HasForeignKey(p => p.OwnerId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<PlaylistSnapshot>(e =>
+        {
+            e.ToTable("playlist_snapshot");
+            e.HasKey(s => s.PlaylistId);
+            e.Property(s => s.PlaylistId).ValueGeneratedNever();
+            e.Property(s => s.MqlText).HasMaxLength(8000).IsRequired();
+            e.Property(s => s.Payload).HasColumnType("jsonb").IsRequired();
+            e.HasOne<Playlist>().WithMany().HasForeignKey(s => s.PlaylistId).OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<RefreshToken>(e =>

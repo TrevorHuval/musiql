@@ -42,6 +42,9 @@ public sealed class ApiFixture : IDisposable
 
     public MusiQLDbContext CreateCatalogContext() => MusiQLDbContextFactory.Create(ConnectionString);
 
+    public MusiQL.Data.App.AppDbContext CreateAppContext() =>
+        MusiQL.Data.App.AppDbContextFactory.Create(ConnectionString);
+
     public async Task<HttpClient> RegisterClientAsync(string? email = null, string password = "Password123!")
     {
         var client = CreateClient();

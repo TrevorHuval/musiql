@@ -18,6 +18,8 @@ project.lock.json
 # Rider / VS Code
 .idea/
 .vscode/
+.claude/
+.interface-design/
 
 # Node / frontend
 node_modules/

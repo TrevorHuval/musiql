@@ -4,7 +4,6 @@ using MusiQL.Api.Contracts;
 using MusiQL.Core.Mql;
 using MusiQL.Core.Mql.Compilation;
 using MusiQL.Core.Mql.Execution;
-using MusiQL.Core.Mql.Schema;
 using MusiQL.Data;
 
 namespace MusiQL.Api.Query;
@@ -29,24 +28,29 @@ public sealed class QueryService(MqlEngine engine, MusiQLDbContext catalog, IOpt
     public async Task<QueryPageResponse> RunAsync(
         CompiledQuery query, Guid? callerUserId, int page, int pageSize, CancellationToken ct)
     {
+        var result = await ExecuteAsync(query, ct);
+        var hint = await LibraryHint(query, callerUserId, result.Rows.Count, ct);
+        return Paginate(query.Entity, Columns(result), result.Rows, page, pageSize, hint);
+    }
+
+    public static IReadOnlyList<QueryColumn> Columns(QueryResult result) =>
+        result.Columns.Select(c => new QueryColumn(c.Name, ColumnTypes.Of(c.ClrType))).ToList();
+
+    public static QueryPageResponse Paginate(
+        string entity,
+        IReadOnlyList<QueryColumn> columns,
+        IReadOnlyList<IReadOnlyList<object?>> rows,
+        int page,
+        int pageSize,
+        string? hint)
+    {
         page = page < 1 ? 1 : page;
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
-        var result = await ExecuteAsync(query, ct);
+        var total = rows.Count;
+        var slice = rows.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-        var total = result.Rows.Count;
-        var rows = result.Rows.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        var hint = await LibraryHint(query, callerUserId, total, ct);
-
-        return new QueryPageResponse(
-            query.Entity,
-            result.Columns.Select(c => new QueryColumn(c.Name, ColumnTypes.Of(c.ClrType))).ToList(),
-            rows,
-            page,
-            pageSize,
-            total,
-            page * pageSize < total,
-            hint);
+        return new QueryPageResponse(entity, columns, slice, page, pageSize, total, page * pageSize < total, hint);
     }
 
     private async Task<string?> LibraryHint(CompiledQuery query, Guid? callerUserId, int total, CancellationToken ct)

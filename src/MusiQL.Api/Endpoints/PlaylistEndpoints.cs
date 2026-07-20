@@ -121,7 +121,7 @@ public static class PlaylistEndpoints
 
     private static async Task<IResult> Tracks(
         Guid id, int? page, int? pageSize, ClaimsPrincipal principal, AppDbContext db, QueryService query,
-        CancellationToken ct)
+        PlaylistSnapshotService snapshots, CancellationToken ct)
     {
         var playlist = await Owned(db, principal, id, ct);
         if (playlist is null)
@@ -135,8 +135,8 @@ public static class PlaylistEndpoints
             return ApiProblems.MqlValidation(compilation.Errors);
         }
 
-        var result = await query.RunAsync(
-            compilation.Query!, playlist.OwnerId, page ?? 1, pageSize ?? QueryService.DefaultPageSize, ct);
+        var result = await snapshots.GetPageAsync(
+            playlist, compilation.Query!, page ?? 1, pageSize ?? QueryService.DefaultPageSize, ct);
         return Results.Ok(result);
     }
 
