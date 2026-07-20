@@ -15,6 +15,7 @@ import { emptyState, type BuilderState } from '../../mql/types'
 import { BuilderPanel } from './builder/BuilderPanel'
 import { AdvancedPanel } from './advanced/AdvancedPanel'
 import { EditorToolbar, type EditorMode } from './EditorToolbar'
+import { ExportSpotifyDialog } from './ExportSpotifyDialog'
 import { ResultsPanel, type ResultsView } from './results/ResultsPanel'
 import { SavePlaylistDialog } from './SavePlaylistDialog'
 import { RenameDialog } from '../library/RenameDialog'
@@ -89,6 +90,7 @@ function Editor({ schema, playlistId, initialMql, playlistName, playlistDescript
   const [switchError, setSwitchError] = useState<string | null>(null)
   const [saveOpen, setSaveOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
   const [page, setPage] = useState(1)
 
   const entityDef = findEntity(schema, builder.entity)
@@ -171,6 +173,7 @@ function Editor({ schema, playlistId, initialMql, playlistName, playlistDescript
         saving={update.isPending}
         onSave={handleSave}
         onRename={isNew ? undefined : () => setRenameOpen(true)}
+        onExport={isNew ? undefined : () => setExportOpen(true)}
       />
 
       {switchError && (
@@ -203,6 +206,14 @@ function Editor({ schema, playlistId, initialMql, playlistName, playlistDescript
       <ResultsPanel view={view} entityLabel={entityLabel} busy={preview.isFetching} onPageChange={setPage} />
 
       {saveOpen && <SavePlaylistDialog mql={currentMql} open onClose={() => setSaveOpen(false)} />}
+      {exportOpen && playlistId && (
+        <ExportSpotifyDialog
+          playlistId={playlistId}
+          playlistName={playlistName ?? 'Playlist'}
+          open
+          onClose={() => setExportOpen(false)}
+        />
+      )}
       {renameOpen && playlistId && (
         <RenameDialog
           playlist={{

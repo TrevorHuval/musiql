@@ -16,6 +16,7 @@ interface EditorToolbarProps {
   saving: boolean
   onSave: () => void
   onRename?: () => void
+  onExport?: () => void
 }
 
 export function EditorToolbar({
@@ -27,6 +28,7 @@ export function EditorToolbar({
   saving,
   onSave,
   onRename,
+  onExport,
 }: EditorToolbarProps) {
   return (
     <div className={styles.toolbar}>
@@ -53,6 +55,14 @@ export function EditorToolbar({
             { value: 'advanced', label: 'Advanced', icon: 'code' },
           ]}
         />
+        {onExport && (
+          <Button variant="secondary" onClick={onExport}>
+            <span className={styles.exportLabel}>
+              <Icon name="link" size={15} />
+              Export
+            </span>
+          </Button>
+        )}
         <Button variant="primary" onClick={onSave} loading={saving} disabled={!isNew && !dirty}>
           {isNew ? 'Save playlist' : dirty ? 'Save changes' : 'Saved'}
         </Button>

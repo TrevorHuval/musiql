@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import type { QueryPage, ResultColumn } from '../../../api/types'
 import { Button } from '../../../components/ui/Button'
 import { Callout } from '../../../components/ui/Callout'
@@ -85,10 +86,15 @@ function Content({ view, entityLabel }: { view: ResultsView; entityLabel: string
             tone="signal"
             icon="library"
             title="Your library is empty"
+            action={
+              <Link to="/settings" className={styles.connectLink}>
+                <Icon name="link" size={14} />
+                Connect Spotify
+              </Link>
+            }
           >
-            This query is scoped to your library, but nothing’s synced yet. Connecting Spotify to
-            fill your library is coming in a later release. Switch the source to “All music” to
-            search the whole catalog for now.
+            This query is scoped to your library, but nothing’s synced yet. Connect Spotify and sync
+            your saved tracks to fill it, or switch the source to “All music”.
           </Callout>
         </div>
       )
