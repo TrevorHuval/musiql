@@ -6,8 +6,8 @@ using Xunit.Abstractions;
 
 namespace MusiQL.Tests.Mql;
 
+[Collection("mql-db")]
 public class ExecutionGuardTests(SampleDatabaseFixture fixture, ITestOutputHelper output)
-    : IClassFixture<SampleDatabaseFixture>
 {
     [Fact]
     public async Task Read_only_transaction_blocks_writes()

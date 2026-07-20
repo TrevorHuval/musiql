@@ -69,3 +69,6 @@ public sealed class SampleDatabaseFixture
             Path.Combine(testDir, "..", "..", "..", "src", "MusiQL.Etl", "sample", "mbdump"));
     }
 }
+
+[CollectionDefinition("mql-db")]
+public sealed class SampleDatabaseCollection : ICollectionFixture<SampleDatabaseFixture>;

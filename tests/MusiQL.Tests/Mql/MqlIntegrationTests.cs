@@ -4,8 +4,8 @@ using Xunit.Abstractions;
 
 namespace MusiQL.Tests.Mql;
 
+[Collection("mql-db")]
 public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelper output)
-    : IClassFixture<SampleDatabaseFixture>
 {
     private static readonly Guid UserA = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     private static readonly Guid UserB = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
