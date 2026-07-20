@@ -25,6 +25,17 @@ npm run dev                   # app on http://localhost:5173
 
 Open http://localhost:5173 — the page reports API and database health. `npm test` runs the frontend test suite.
 
+### Production-ish stack
+
+To run the published API and a built frontend (served by nginx, same-origin) instead of the dev servers, set `JWT_SIGNING_KEY` in `.env` and start the `prod` compose profile:
+
+```sh
+docker compose --profile prod up -d --build
+dotnet run --project src/MusiQL.Etl -- load --sample   # load catalog into the compose db
+```
+
+The app is then at http://localhost:8088. The plain `docker compose up -d` (no profile) starts only Postgres for the dev workflow above.
+
 ## Layout
 
 | Path | Purpose |
@@ -40,7 +51,7 @@ Open http://localhost:5173 — the page reports API and database health. `npm te
 
 The API is authenticated with JWT bearer tokens (ASP.NET Identity, users stored in the `app` schema). Register or log in — `POST /api/auth/register`, `POST /api/auth/login` — to get an access token, then call the protected endpoints with `Authorization: Bearer <token>`. Refresh tokens rotate on `POST /api/auth/refresh`.
 
-- Playlists are stored MQL definitions ("live views"): CRUD under `/api/playlists`, scoped to the owner, with `GET /api/playlists/{id}/tracks` executing the definition.
+- Playlists are stored MQL definitions ("live views"): CRUD under `/api/playlists`, scoped to the owner, with `GET /api/playlists/{id}/tracks` executing the definition. `GET /api/playlists/{id}/export/m3u` downloads a track playlist as an `.m3u8` file.
 - `POST /api/query/preview` validates and runs an ad-hoc MQL string, returning a result page or positional parse/validation errors the builder renders inline.
 - `/api/catalog/{genres,artists,fields}` back the visual builder with autocomplete and schema metadata.
 
