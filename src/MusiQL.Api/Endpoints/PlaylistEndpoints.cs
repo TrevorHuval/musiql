@@ -4,6 +4,7 @@ using MusiQL.Api.Auth;
 using MusiQL.Api.Contracts;
 using MusiQL.Api.Errors;
 using MusiQL.Api.Query;
+using MusiQL.Api.Spotify;
 using MusiQL.Data.App;
 
 namespace MusiQL.Api.Endpoints;
@@ -18,6 +19,7 @@ public static class PlaylistEndpoints
         group.MapPut("/{id:guid}", Update);
         group.MapDelete("/{id:guid}", Delete);
         group.MapGet("/{id:guid}/tracks", Tracks).RequireRateLimiting(RateLimits.Query);
+        group.MapPost("/{id:guid}/export/spotify", ExportToSpotify).RequireRateLimiting(RateLimits.Query);
         return group;
     }
 
@@ -136,6 +138,28 @@ public static class PlaylistEndpoints
         var result = await query.RunAsync(
             compilation.Query!, playlist.OwnerId, page ?? 1, pageSize ?? QueryService.DefaultPageSize, ct);
         return Results.Ok(result);
+    }
+
+    private static async Task<IResult> ExportToSpotify(
+        Guid id, bool? rematch, ClaimsPrincipal principal, AppDbContext db, SpotifyExportService export,
+        CancellationToken ct)
+    {
+        var playlist = await Owned(db, principal, id, ct);
+        if (playlist is null)
+        {
+            return ApiProblems.NotFound("Playlist");
+        }
+
+        try
+        {
+            var result = await export.ExportAsync(playlist, rematch ?? false, ct);
+            return Results.Ok(result);
+        }
+        catch (Exception ex) when (ex is SpotifyNotConfiguredException or SpotifyNotConnectedException
+            or ExportNotSupportedException or SpotifyApiException)
+        {
+            return ApiProblems.Spotify(ex);
+        }
     }
 
     private static Task<Playlist?> Owned(AppDbContext db, ClaimsPrincipal principal, Guid id, CancellationToken ct)

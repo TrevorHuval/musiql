@@ -17,18 +17,22 @@ public sealed class QueryService(MqlEngine engine, MusiQLDbContext catalog, IOpt
     public MqlCompilation Compile(string mql, Guid? callerUserId) =>
         engine.Compile(mql, new CompileContext { CallerUserId = callerUserId });
 
+    public Task<QueryResult> ExecuteAsync(CompiledQuery query, CancellationToken ct)
+    {
+        var executor = new QueryExecutor(new ExecutionOptions(options.Value.ConnectionString)
+        {
+            StatementTimeout = options.Value.StatementTimeout
+        });
+        return executor.ExecuteAsync(query, ct);
+    }
+
     public async Task<QueryPageResponse> RunAsync(
         CompiledQuery query, Guid? callerUserId, int page, int pageSize, CancellationToken ct)
     {
         page = page < 1 ? 1 : page;
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
-        var executor = new QueryExecutor(new ExecutionOptions(options.Value.ConnectionString)
-        {
-            StatementTimeout = options.Value.StatementTimeout
-        });
-
-        var result = await executor.ExecuteAsync(query, ct);
+        var result = await ExecuteAsync(query, ct);
 
         var total = result.Rows.Count;
         var rows = result.Rows.Skip((page - 1) * pageSize).Take(pageSize).ToList();

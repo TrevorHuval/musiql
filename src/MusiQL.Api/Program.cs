@@ -9,6 +9,7 @@ using MusiQL.Api;
 using MusiQL.Api.Auth;
 using MusiQL.Api.Endpoints;
 using MusiQL.Api.Query;
+using MusiQL.Api.Spotify;
 using MusiQL.Core.Mql;
 using MusiQL.Data;
 using MusiQL.Data.App;
@@ -69,6 +70,8 @@ builder.Services.AddSingleton(MqlEngine.CreateDefault());
 builder.Services.Configure<QueryOptions>(options =>
     options.ConnectionString = builder.Configuration.GetConnectionString("Query") ?? connectionString);
 builder.Services.AddScoped<QueryService>();
+
+builder.Services.AddSpotifyIntegration(builder.Configuration);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddHttpLogging(options =>
@@ -131,6 +134,7 @@ api.MapGroup("/auth").MapAuthEndpoints();
 api.MapGroup("/playlists").MapPlaylistEndpoints().RequireAuthorization();
 api.MapGroup("/query").MapQueryEndpoints().RequireAuthorization();
 api.MapGroup("/catalog").MapCatalogEndpoints().RequireAuthorization();
+api.MapGroup("/spotify").MapSpotifyEndpoints().RequireAuthorization();
 
 app.Run();
 
