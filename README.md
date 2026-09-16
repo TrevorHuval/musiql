@@ -2,9 +2,15 @@
 
 [![CI](https://github.com/TrevorHuval/musiql/actions/workflows/ci.yml/badge.svg)](https://github.com/TrevorHuval/musiql/actions/workflows/ci.yml) [![CodeQL](https://github.com/TrevorHuval/musiql/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/TrevorHuval/musiql/security/code-scanning) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
+**Live demo: [trevorhuval.com/musiql](https://trevorhuval.com/musiql)** — register an account and try the canonical query below. Deployed on AWS EC2 via GitHub Actions and multi-arch Docker images.
+
+![Playlist builder with live results](.github/images/builder.png)
+
 MusiQL is a web app where a playlist is a saved query rather than a hand-curated list. You describe what you want — say, grunge and alternative rock from 1990 to 2004, minus Nirvana — and MusiQL stores that definition and re-runs it against a music catalog every time the playlist is opened, so the result stays live as the catalog grows. There are two ways to write a query: a visual builder for casual use, and an advanced mode where fluent users write MQL, a small purpose-built query language. Users never write raw SQL; MQL is parsed to an AST on the server, validated against a whitelisted schema, and compiled to parameterized SQL.
 
 The catalog is built from MusicBrainz PostgreSQL dumps, trimmed by an ETL pipeline into an app-owned schema holding just what queries need: artists, releases, recordings, genres, and dates. The backend is an ASP.NET Core (.NET 10) API over PostgreSQL; the frontend is React (Vite + TypeScript). MusiQL connects to Spotify to export a playlist to the user's account and to sync their saved tracks back into the library that `from library` queries read. The app carries the catalog ETL, the MQL query engine, an authenticated REST API, and a React client for building, previewing, and exporting playlists.
+
+![Advanced mode: the same playlist written in MQL](.github/images/advanced.png)
 
 ## Running locally
 
