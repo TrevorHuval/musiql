@@ -84,6 +84,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - name: Build API image
         uses: docker/build-push-action@v6
@@ -114,6 +115,7 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -127,6 +129,7 @@ jobs:
           context: .
           file: src/MusiQL.Api/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/trevorhuval/musiql-api:latest
             ghcr.io/trevorhuval/musiql-api:${{ github.sha }}
@@ -138,6 +141,7 @@ jobs:
           context: frontend
           file: frontend/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           build-args: |
             BASE_PATH=/musiql/
           tags: |
@@ -151,6 +155,7 @@ jobs:
           context: .
           file: src/MusiQL.Etl/Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/trevorhuval/musiql-etl:latest
             ghcr.io/trevorhuval/musiql-etl:${{ github.sha }}
