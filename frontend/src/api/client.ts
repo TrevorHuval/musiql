@@ -34,6 +34,14 @@ interface RequestOptions {
 
 let refreshInFlight: Promise<TokenPair | null> | null = null
 
+// Vite's BASE_URL is the path prefix the app is deployed under ("/" locally,
+// "/musiql/" behind the reverse proxy). API routes live under the same prefix.
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+export function apiUrl(path: string): string {
+  return `${basePath}${path}`
+}
+
 async function refreshTokens(): Promise<TokenPair | null> {
   const existing = getAuth()
   if (!existing) return null
@@ -41,7 +49,7 @@ async function refreshTokens(): Promise<TokenPair | null> {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
       try {
-        const response = await fetch('/api/auth/refresh', {
+        const response = await fetch(apiUrl('/api/auth/refresh'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken: existing.refreshToken }),
@@ -94,7 +102,7 @@ async function authorizedFetch(
     if (tokens) headers.Authorization = `${tokens.tokenType} ${tokens.accessToken}`
   }
 
-  const response = await fetch(path, {
+  const response = await fetch(apiUrl(path), {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),

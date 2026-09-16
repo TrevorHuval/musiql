@@ -3,6 +3,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# Path prefix to serve under behind a reverse proxy, e.g. --build-arg BASE_PATH=/musiql/
+ARG BASE_PATH=/
+ENV BASE_PATH=$BASE_PATH
 RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime
