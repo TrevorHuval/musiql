@@ -145,3 +145,14 @@ jobs:
             ghcr.io/trevorhuval/musiql-web:${{ github.sha }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web
+      - name: Build and push ETL image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/MusiQL.Etl/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/trevorhuval/musiql-etl:latest
+            ghcr.io/trevorhuval/musiql-etl:${{ github.sha }}
+          cache-from: type=gha,scope=etl
+          cache-to: type=gha,mode=max,scope=etl
