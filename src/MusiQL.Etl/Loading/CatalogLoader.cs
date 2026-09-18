@@ -13,6 +13,14 @@ public sealed class CatalogLoader(string connectionString, Action<string> log)
     private static readonly IReadOnlyDictionary<string, TableSpec> Specs =
         TableSpecs.All.ToDictionary(s => s.Table);
 
+    // Session-level advisory lock so two loads cannot run against one database.
+    private const long LoadLockKey = 0x4d7573694c6f6164;
+
+    // The swap TRUNCATEs the catalog, which needs an exclusive lock on every
+    // table. Rather than queue behind a long-running reader (and block every
+    // reader arriving after us), give up and let the operator retry.
+    private static readonly TimeSpan SwapLockTimeout = TimeSpan.FromSeconds(30);
+
     public void Load(IDumpSource source)
     {
         log("applying migrations");
@@ -24,31 +32,61 @@ public sealed class CatalogLoader(string connectionString, Action<string> log)
         using var connection = new NpgsqlConnection(connectionString);
         connection.Open();
 
-        log("resetting staging schema");
-        Execute(connection, Script("staging.sql"));
-
-        var wanted = Specs.Keys.ToHashSet();
-        foreach (var table in source.Read(wanted))
+        if (!TryLock(connection))
         {
-            var rows = Copy(connection, Specs[table.Table], table.Reader);
-            log($"staging.{table.Table}: {rows:N0} rows");
+            throw new InvalidOperationException("Another catalog load is already running against this database.");
         }
 
-        log("indexing staging");
-        Execute(connection, Script("index.sql"));
-
-        log("transforming to catalog shape");
-        Execute(connection, Script("transform.sql"));
-
-        log("swapping catalog");
-        using (var swap = connection.BeginTransaction())
+        try
         {
-            Execute(connection, Script("swap.sql"), swap);
-            swap.Commit();
+            log("resetting staging schema");
+            Execute(connection, Script("staging.sql"));
+
+            var wanted = Specs.Keys.ToHashSet();
+            foreach (var table in source.Read(wanted))
+            {
+                var rows = Copy(connection, Specs[table.Table], table.Reader);
+                log($"staging.{table.Table}: {rows:N0} rows");
+            }
+
+            log("indexing staging");
+            Execute(connection, Script("index.sql"));
+
+            log("transforming to catalog shape");
+            Execute(connection, Script("transform.sql"));
+
+            log("swapping catalog (readers block until this commits)");
+            using (var swap = connection.BeginTransaction())
+            {
+                Execute(connection, $"SET LOCAL lock_timeout = {(int)SwapLockTimeout.TotalMilliseconds};", swap);
+                Execute(connection, Script("swap.sql"), swap);
+                swap.Commit();
+            }
+
+            log("analyzing catalog");
+            Execute(connection, "ANALYZE catalog.artist, catalog.genre, catalog.release_group, catalog.release, "
+                + "catalog.recording, catalog.artist_genre, catalog.release_group_genre, catalog.recording_genre;");
+        }
+        finally
+        {
+            try
+            {
+                Execute(connection, "DROP SCHEMA IF EXISTS staging CASCADE;");
+                Execute(connection, $"SELECT pg_advisory_unlock({LoadLockKey});");
+            }
+            catch (NpgsqlException ex)
+            {
+                log($"cleanup failed, staging schema may remain: {ex.Message}");
+            }
         }
 
-        Execute(connection, "DROP SCHEMA staging CASCADE;");
         log("done");
+    }
+
+    private static bool TryLock(NpgsqlConnection connection)
+    {
+        using var command = new NpgsqlCommand($"SELECT pg_try_advisory_lock({LoadLockKey});", connection);
+        return (bool)command.ExecuteScalar()!;
     }
 
     private static long Copy(NpgsqlConnection connection, TableSpec spec, TextReader reader)

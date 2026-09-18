@@ -38,6 +38,14 @@ public sealed class Lexer(string source)
             {
                 return tokens;
             }
+
+            if (tokens.Count > MqlLimits.MaxTokens)
+            {
+                throw new MqlException(new MqlError(
+                    MqlErrorCode.QueryTooLong,
+                    $"Queries are limited to {MqlLimits.MaxTokens:N0} tokens.",
+                    token.Span));
+            }
         }
     }
 

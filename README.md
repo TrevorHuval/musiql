@@ -73,6 +73,8 @@ dotnet run --project src/MusiQL.Etl -- load --sample   # load catalog into the c
 
 The app is then at http://localhost:8088. The plain `docker compose up -d` (no profile) starts only Postgres for the dev workflow above.
 
+In the Production environment the API refuses to start with a placeholder or short (< 32 bytes) `JWT_SIGNING_KEY` or Spotify key, and without a read-only `QUERY_CONNECTION` for MQL execution unless `QUERY_ALLOW_OWNER_CONNECTION=true` (fine locally, not on a public host). Postgres binds to loopback by default (`POSTGRES_BIND`), every container has bounded logs and a memory ceiling, and the API rate limits, per-user quotas and the global query admission limit are configurable under `Limits__*` and `Query__*`; see `.env.example`.
+
 ## Layout
 
 | Path | Purpose |
@@ -124,7 +126,7 @@ dotnet run --project src/MusiQL.Etl -- download        # fetch the latest real d
 dotnet run --project src/MusiQL.Etl -- load            # load a downloaded dump
 ```
 
-`load` applies EF migrations, streams each dump file into a `staging` schema with Npgsql binary COPY, reshapes it into the catalog with set-based SQL, then swaps the result into `catalog` in a single transaction — readers keep seeing the previous catalog until the swap commits, so a refresh has no visible downtime. Files are streamed line by line and never held in memory, so peak memory is flat regardless of dump size. The connection string resolves from `--connection`, then the `MUSIQL_CONNECTION` environment variable, then the local dev database on port 5442.
+`load` applies EF migrations, streams each dump file into a `staging` schema with Npgsql binary COPY, reshapes it into the catalog with set-based SQL, then swaps the result into `catalog` in a single transaction. The swap `TRUNCATE`s and reinserts, which takes an exclusive lock on every catalog table, so reads block for the length of the reinsert (minutes for a full dump) and the loader gives up after 30 seconds if it cannot get the lock. Run a full refresh in a maintenance window, and build it on a separate host rather than the one serving traffic. Files are streamed line by line and never held in memory, so peak memory is flat regardless of dump size. The connection string resolves from `--connection`, then the `MUSIQL_CONNECTION` environment variable, then the local dev database on port 5442.
 
 `--sample` loads `src/MusiQL.Etl/sample`, a hand-built mini-dump of ~50 artists across genres and eras (including the 1990s grunge catalog behind the canonical playlist example). Development and tests use it so the multi-gigabyte real dump is never required.
 

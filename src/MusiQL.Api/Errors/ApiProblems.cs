@@ -46,6 +46,30 @@ public static class ApiProblems
         statusCode: StatusCodes.Status404NotFound,
         type: Base + "not-found");
 
+    public static IResult Invalid(string title, string? detail = null) => Results.Problem(
+        title: title,
+        detail: detail,
+        statusCode: StatusCodes.Status400BadRequest,
+        type: Base + "validation");
+
+    public static IResult QuotaExceeded(string detail) => Results.Problem(
+        title: "Limit reached",
+        detail: detail,
+        statusCode: StatusCodes.Status403Forbidden,
+        type: Base + "quota");
+
+    public static IResult Busy(string detail) => Results.Problem(
+        title: "Server busy",
+        detail: detail,
+        statusCode: StatusCodes.Status503ServiceUnavailable,
+        type: Base + "busy");
+
+    public static IResult InProgress(string detail) => Results.Problem(
+        title: "Operation already running",
+        detail: detail,
+        statusCode: StatusCodes.Status409Conflict,
+        type: Base + "in-progress");
+
     public static IResult ExportUnsupported(string detail) => Results.Problem(
         title: "Playlist cannot be exported",
         detail: detail,

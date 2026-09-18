@@ -14,8 +14,8 @@ public static class CatalogEndpoints
 
     public static RouteGroupBuilder MapCatalogEndpoints(this RouteGroupBuilder group)
     {
-        group.MapGet("/genres", Genres);
-        group.MapGet("/artists", Artists);
+        group.MapGet("/genres", Genres).RequireRateLimiting(RateLimits.Query);
+        group.MapGet("/artists", Artists).RequireRateLimiting(RateLimits.Query);
         group.MapGet("/fields", Fields);
         return group;
     }

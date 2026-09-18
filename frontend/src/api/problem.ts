@@ -14,6 +14,7 @@ export function problemToMessage(error: unknown, fallback = 'Something went wron
   if (error.status === 401) return 'That email and password don’t match.'
   if (error.status === 423) return 'Too many attempts. This account is locked for a few minutes.'
   if (error.status === 429) return 'You’re going a little fast. Try again in a moment.'
+  if (error.status === 503) return 'The server is busy right now. Try again in a few seconds.'
 
   return error.problem?.title ?? error.message ?? fallback
 }

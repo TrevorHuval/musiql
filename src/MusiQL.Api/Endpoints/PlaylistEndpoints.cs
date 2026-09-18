@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MusiQL.Api.Auth;
 using MusiQL.Api.Contracts;
 using MusiQL.Api.Errors;
@@ -15,10 +16,10 @@ public static class PlaylistEndpoints
     public static RouteGroupBuilder MapPlaylistEndpoints(this RouteGroupBuilder group)
     {
         group.MapGet("/", List);
-        group.MapPost("/", Create);
+        group.MapPost("/", Create).RequireRateLimiting(RateLimits.Write);
         group.MapGet("/{id:guid}", Get);
-        group.MapPut("/{id:guid}", Update);
-        group.MapDelete("/{id:guid}", Delete);
+        group.MapPut("/{id:guid}", Update).RequireRateLimiting(RateLimits.Write);
+        group.MapDelete("/{id:guid}", Delete).RequireRateLimiting(RateLimits.Write);
         group.MapGet("/{id:guid}/tracks", Tracks).RequireRateLimiting(RateLimits.Query);
         group.MapGet("/{id:guid}/export/m3u", ExportM3u).RequireRateLimiting(RateLimits.Query);
         group.MapPost("/{id:guid}/export/spotify", ExportToSpotify).RequireRateLimiting(RateLimits.Query);
@@ -38,18 +39,25 @@ public static class PlaylistEndpoints
     }
 
     private static async Task<IResult> Create(
-        PlaylistRequest request, ClaimsPrincipal principal, AppDbContext db, QueryService query, CancellationToken ct)
+        PlaylistRequest request, ClaimsPrincipal principal, AppDbContext db, QueryService query,
+        IOptions<LimitsOptions> limits, CancellationToken ct)
     {
         var userId = principal.UserId()!.Value;
-        if (string.IsNullOrWhiteSpace(request.Name))
+        if (Validate(request) is { } problem)
         {
-            return Results.Problem(title: "Name is required", statusCode: StatusCodes.Status400BadRequest);
+            return problem;
         }
 
-        var compilation = query.Compile(request.Mql ?? "", userId);
+        var compilation = query.Compile(request.Mql, userId);
         if (!compilation.Success)
         {
             return ApiProblems.MqlValidation(compilation.Errors);
+        }
+
+        var max = limits.Value.MaxPlaylistsPerUser;
+        if (max > 0 && await db.Playlists.CountAsync(p => p.OwnerId == userId, ct) >= max)
+        {
+            return ApiProblems.QuotaExceeded($"You can keep up to {max} playlists. Delete one to make room.");
         }
 
         var now = DateTime.UtcNow;
@@ -59,7 +67,7 @@ public static class PlaylistEndpoints
             OwnerId = userId,
             Name = request.Name.Trim(),
             Description = request.Description,
-            MqlText = request.Mql!,
+            MqlText = request.Mql,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -87,12 +95,12 @@ public static class PlaylistEndpoints
             return ApiProblems.NotFound("Playlist");
         }
 
-        if (string.IsNullOrWhiteSpace(request.Name))
+        if (Validate(request) is { } problem)
         {
-            return Results.Problem(title: "Name is required", statusCode: StatusCodes.Status400BadRequest);
+            return problem;
         }
 
-        var compilation = query.Compile(request.Mql ?? "", playlist.OwnerId);
+        var compilation = query.Compile(request.Mql, playlist.OwnerId);
         if (!compilation.Success)
         {
             return ApiProblems.MqlValidation(compilation.Errors);
@@ -100,7 +108,7 @@ public static class PlaylistEndpoints
 
         playlist.Name = request.Name.Trim();
         playlist.Description = request.Description;
-        playlist.MqlText = request.Mql!;
+        playlist.MqlText = request.Mql;
         playlist.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 
@@ -176,7 +184,7 @@ public static class PlaylistEndpoints
 
     private static async Task<IResult> ExportToSpotify(
         Guid id, bool? rematch, ClaimsPrincipal principal, AppDbContext db, SpotifyExportService export,
-        CancellationToken ct)
+        OperationLocks locks, CancellationToken ct)
     {
         var playlist = await Owned(db, principal, id, ct);
         if (playlist is null)
@@ -186,6 +194,7 @@ public static class PlaylistEndpoints
 
         try
         {
+            using var _ = locks.Acquire($"export:{playlist.Id}", "An export of this playlist");
             var result = await export.ExportAsync(playlist, rematch ?? false, ct);
             return Results.Ok(result);
         }
@@ -194,6 +203,39 @@ public static class PlaylistEndpoints
         {
             return ApiProblems.Spotify(ex);
         }
+    }
+
+    // Column limits from AppDbContext, checked here so an oversized save is a
+    // 400 with a reason instead of a database error.
+    private static IResult? Validate(PlaylistRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return ApiProblems.Invalid("Name is required");
+        }
+
+        if (request.Name.Trim().Length > Playlist.MaxNameLength)
+        {
+            return ApiProblems.Invalid("Name is too long", $"Names are limited to {Playlist.MaxNameLength} characters.");
+        }
+
+        if (request.Description?.Length > Playlist.MaxDescriptionLength)
+        {
+            return ApiProblems.Invalid(
+                "Description is too long", $"Descriptions are limited to {Playlist.MaxDescriptionLength} characters.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Mql))
+        {
+            return ApiProblems.Invalid("A query is required");
+        }
+
+        if (request.Mql.Length > Playlist.MaxMqlLength)
+        {
+            return ApiProblems.Invalid("Query is too long", $"Queries are limited to {Playlist.MaxMqlLength:N0} characters.");
+        }
+
+        return null;
     }
 
     private static Task<Playlist?> Owned(AppDbContext db, ClaimsPrincipal principal, Guid id, CancellationToken ct)

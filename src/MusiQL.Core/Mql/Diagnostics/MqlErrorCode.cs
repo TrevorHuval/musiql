@@ -2,6 +2,7 @@ namespace MusiQL.Core.Mql.Diagnostics;
 
 public enum MqlErrorCode
 {
+    QueryTooLong,
     UnexpectedCharacter,
     UnterminatedString,
     InvalidEscape,

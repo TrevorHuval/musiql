@@ -133,6 +133,23 @@ public class ParserTests
         Assert.Equal(MqlErrorCode.ExpressionTooDeep, error.Code);
     }
 
+    [Fact]
+    public void Source_longer_than_the_limit_is_rejected_before_lexing()
+    {
+        var input = "tracks where " + new string(' ', MqlLimits.MaxSourceLength) + "year = 1";
+        var error = Parse(input);
+        Assert.Equal(MqlErrorCode.QueryTooLong, error.Code);
+        Assert.Equal(MqlLimits.MaxSourceLength, error.Span.Start);
+    }
+
+    [Fact]
+    public void Token_budget_is_enforced()
+    {
+        var input = "tracks where " + string.Concat(Enumerable.Repeat("(", MqlLimits.MaxTokens + 1));
+        var error = Parse(input);
+        Assert.Equal(MqlErrorCode.QueryTooLong, error.Code);
+    }
+
     private static MqlError Parse(string input) =>
         Assert.Throws<MqlException>(() => Parser.Parse(input)).Error;
 }

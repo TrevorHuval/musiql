@@ -100,10 +100,9 @@ public class SpotifyExportServiceTests(ApiFixture fixture)
 
     private SpotifyExportService BuildExport(FakeSpotifyClient client)
     {
+        var options = Options.Create(new QueryOptions { ConnectionString = fixture.ConnectionString });
         var query = new QueryService(
-            MqlEngine.CreateDefault(),
-            fixture.CreateCatalogContext(),
-            Options.Create(new QueryOptions { ConnectionString = fixture.ConnectionString }));
+            MqlEngine.CreateDefault(), fixture.CreateCatalogContext(), new QueryGate(options), options);
         return new SpotifyExportService(
             query,
             new TrackMatcher(new FakeIsrcLookup()),
@@ -113,10 +112,9 @@ public class SpotifyExportServiceTests(ApiFixture fixture)
 
     private async Task<IReadOnlyList<string>> ExpectedTitlesAsync(Guid ownerId)
     {
+        var options = Options.Create(new QueryOptions { ConnectionString = fixture.ConnectionString });
         var query = new QueryService(
-            MqlEngine.CreateDefault(),
-            fixture.CreateCatalogContext(),
-            Options.Create(new QueryOptions { ConnectionString = fixture.ConnectionString }));
+            MqlEngine.CreateDefault(), fixture.CreateCatalogContext(), new QueryGate(options), options);
         var compiled = query.Compile(GrungeMql, ownerId);
         var result = await query.ExecuteAsync(compiled.Query!, default);
         var titleIndex = result.Columns.Select((c, i) => (c.Name, i)).First(x => x.Name == "title").i;

@@ -36,9 +36,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.ToTable("playlist");
             e.HasKey(p => p.Id);
             e.Property(p => p.Id).ValueGeneratedNever();
-            e.Property(p => p.Name).HasMaxLength(200).IsRequired();
-            e.Property(p => p.Description).HasMaxLength(2000);
-            e.Property(p => p.MqlText).HasMaxLength(8000).IsRequired();
+            e.Property(p => p.Name).HasMaxLength(Playlist.MaxNameLength).IsRequired();
+            e.Property(p => p.Description).HasMaxLength(Playlist.MaxDescriptionLength);
+            e.Property(p => p.MqlText).HasMaxLength(Playlist.MaxMqlLength).IsRequired();
             e.HasIndex(p => new { p.OwnerId, p.Name });
             e.HasOne<AppUser>().WithMany().HasForeignKey(p => p.OwnerId).OnDelete(DeleteBehavior.Cascade);
         });
@@ -48,7 +48,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.ToTable("playlist_snapshot");
             e.HasKey(s => s.PlaylistId);
             e.Property(s => s.PlaylistId).ValueGeneratedNever();
-            e.Property(s => s.MqlText).HasMaxLength(8000).IsRequired();
+            e.Property(s => s.MqlText).HasMaxLength(Playlist.MaxMqlLength).IsRequired();
             e.Property(s => s.Payload).HasColumnType("jsonb").IsRequired();
             e.HasOne<Playlist>().WithMany().HasForeignKey(s => s.PlaylistId).OnDelete(DeleteBehavior.Cascade);
         });

@@ -1,3 +1,9 @@
+x-logging: &bounded-logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:17
@@ -7,8 +13,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    # Loopback only. Set POSTGRES_BIND=0.0.0.0 if another host must reach it.
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_BIND:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - musiql-pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +23,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging: *bounded-logs
+    mem_limit: ${POSTGRES_MEMORY_LIMIT:-768m}
 
   # Production-ish local stack: published API + built frontend behind nginx,
   # sharing the db above. Start with: docker compose --profile prod up --build
@@ -30,6 +39,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       Startup__MigrateAppSchema: "true"
       ConnectionStrings__MusiQL: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      ConnectionStrings__Query: "${QUERY_CONNECTION:-}"
+      Query__AllowOwnerConnection: "${QUERY_ALLOW_OWNER_CONNECTION:-false}"
+      Proxy__TrustedHops: "${PROXY_TRUSTED_HOPS:-1}"
+      Limits__MaxUsers: "${MAX_USERS:-0}"
       Jwt__SigningKey: "${JWT_SIGNING_KEY}"
       Spotify__ClientId: "${SPOTIFY_CLIENT_ID:-}"
       Spotify__TokenEncryptionKey: "${SPOTIFY_TOKEN_ENCRYPTION_KEY:-}"
@@ -37,6 +50,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *bounded-logs
+    mem_limit: ${API_MEMORY_LIMIT:-512m}
 
   web:
     build:
@@ -49,6 +70,8 @@ services:
       - "${WEB_PORT:-8088}:80"
     depends_on:
       - api
+    logging: *bounded-logs
+    mem_limit: ${WEB_MEMORY_LIMIT:-64m}
 
 volumes:
   musiql-pgdata:

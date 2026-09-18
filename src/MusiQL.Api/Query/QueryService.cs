@@ -8,7 +8,8 @@ using MusiQL.Data;
 
 namespace MusiQL.Api.Query;
 
-public sealed class QueryService(MqlEngine engine, MusiQLDbContext catalog, IOptions<QueryOptions> options)
+public sealed class QueryService(
+    MqlEngine engine, MusiQLDbContext catalog, QueryGate gate, IOptions<QueryOptions> options)
 {
     public const int DefaultPageSize = 50;
     public const int MaxPageSize = 100;
@@ -16,13 +17,17 @@ public sealed class QueryService(MqlEngine engine, MusiQLDbContext catalog, IOpt
     public MqlCompilation Compile(string mql, Guid? callerUserId) =>
         engine.Compile(mql, new CompileContext { CallerUserId = callerUserId });
 
-    public Task<QueryResult> ExecuteAsync(CompiledQuery query, CancellationToken ct)
+    public async Task<QueryResult> ExecuteAsync(CompiledQuery query, CancellationToken ct)
     {
         var executor = new QueryExecutor(new ExecutionOptions(options.Value.ConnectionString)
         {
             StatementTimeout = options.Value.StatementTimeout
         });
-        return executor.ExecuteAsync(query, ct);
+
+        using (await gate.EnterAsync(ct))
+        {
+            return await executor.ExecuteAsync(query, ct);
+        }
     }
 
     public async Task<QueryPageResponse> RunAsync(

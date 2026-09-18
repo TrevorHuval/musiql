@@ -19,7 +19,7 @@ public static class QueryEndpoints
     {
         if (string.IsNullOrWhiteSpace(request.Mql))
         {
-            return Results.Problem(title: "A query is required", statusCode: StatusCodes.Status400BadRequest);
+            return ApiProblems.Invalid("A query is required");
         }
 
         var userId = principal.UserId();

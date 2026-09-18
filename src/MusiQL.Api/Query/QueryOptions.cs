@@ -8,4 +8,12 @@ public sealed class QueryOptions
     // Cached playlist results are served until this age elapses or the definition
     // changes. Zero disables snapshotting and executes every read.
     public TimeSpan SnapshotTtl { get; set; } = TimeSpan.FromMinutes(10);
+
+    // Executions allowed to hold a catalog connection at the same time, across
+    // all users, and how long a request waits for a slot before giving up.
+    public int MaxConcurrent { get; set; } = 4;
+    public TimeSpan AdmissionTimeout { get; set; } = TimeSpan.FromSeconds(2);
+
+    // Production refuses to run MQL over the owner connection unless this is set.
+    public bool AllowOwnerConnection { get; set; }
 }

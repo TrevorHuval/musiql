@@ -36,6 +36,8 @@ public sealed class TokenService(IOptions<JwtOptions> options)
         return new AccessToken(new JwtSecurityTokenHandler().WriteToken(token), expires);
     }
 
+    public const int RefreshTokenLength = 43;
+
     public static string CreateRefreshToken() =>
         Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32));
 

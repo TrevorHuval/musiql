@@ -118,11 +118,11 @@ public class AuthFlowTests(ApiFixture fixture, ITestOutputHelper output)
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         var rotated = await first.Content.ReadFromJsonAsync<AuthResponse>();
 
-        var reuse = await client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(tokens.RefreshToken));
-        Assert.Equal(HttpStatusCode.Unauthorized, reuse.StatusCode);
-
         var withNew = await client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(rotated!.RefreshToken));
         Assert.Equal(HttpStatusCode.OK, withNew.StatusCode);
+
+        var reuse = await client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(tokens.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, reuse.StatusCode);
     }
 
     private bool Skip()

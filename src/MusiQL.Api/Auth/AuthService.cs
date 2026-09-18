@@ -9,7 +9,8 @@ public enum AuthFailure
 {
     Validation,
     InvalidCredentials,
-    LockedOut
+    LockedOut,
+    RegistrationClosed
 }
 
 public sealed record IssuedTokens(AppUser User, AccessToken Access, string RefreshToken);
@@ -28,10 +29,17 @@ public sealed class AuthService(
     UserManager<AppUser> users,
     AppDbContext db,
     TokenService tokens,
-    IOptions<JwtOptions> jwt)
+    IOptions<JwtOptions> jwt,
+    IOptions<LimitsOptions> limits)
 {
     public async Task<AuthResult> RegisterAsync(string email, string password, CancellationToken ct)
     {
+        var maxUsers = limits.Value.MaxUsers;
+        if (maxUsers > 0 && await db.Users.CountAsync(ct) >= maxUsers)
+        {
+            return AuthResult.Fail(AuthFailure.RegistrationClosed);
+        }
+
         var user = new AppUser
         {
             UserName = email,
@@ -74,42 +82,67 @@ public sealed class AuthService(
         return AuthResult.Success(await IssueAsync(user, ct));
     }
 
+    // The presented token is consumed with a conditional update so concurrent
+    // refreshes of the same token produce exactly one successor. Presenting a
+    // token that was already consumed is treated as replay and ends every
+    // session the user has.
     public async Task<AuthResult> RefreshAsync(string refreshToken, CancellationToken ct)
     {
         var hash = TokenService.Hash(refreshToken);
-        var stored = await db.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
         var now = DateTime.UtcNow;
-        if (stored is null || !stored.Active(now))
+
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+
+        var consumed = await db.RefreshTokens
+            .Where(t => t.TokenHash == hash && t.RevokedAt == null && t.ExpiresAt > now)
+            .ExecuteUpdateAsync(set => set.SetProperty(t => t.RevokedAt, now), ct);
+
+        var stored = await db.RefreshTokens.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
+
+        if (consumed != 1 || stored is null)
         {
+            if (stored is not null && stored.ExpiresAt > now)
+            {
+                await RevokeAllAsync(stored.UserId, now, ct);
+            }
+
+            await transaction.CommitAsync(ct);
             return AuthResult.Fail(AuthFailure.InvalidCredentials);
         }
 
         var user = await users.FindByIdAsync(stored.UserId.ToString());
         if (user is null)
         {
+            await transaction.CommitAsync(ct);
             return AuthResult.Fail(AuthFailure.InvalidCredentials);
         }
 
-        stored.RevokedAt = now;
-        return AuthResult.Success(await IssueAsync(user, ct));
+        var issued = await IssueAsync(user, ct);
+        await transaction.CommitAsync(ct);
+        return AuthResult.Success(issued);
     }
 
     public async Task RevokeAsync(string refreshToken, CancellationToken ct)
     {
         var hash = TokenService.Hash(refreshToken);
-        var stored = await db.RefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
-        if (stored is not null && stored.RevokedAt is null)
-        {
-            stored.RevokedAt = DateTime.UtcNow;
-            await db.SaveChangesAsync(ct);
-        }
+        await db.RefreshTokens
+            .Where(t => t.TokenHash == hash && t.RevokedAt == null)
+            .ExecuteUpdateAsync(set => set.SetProperty(t => t.RevokedAt, DateTime.UtcNow), ct);
     }
+
+    private Task<int> RevokeAllAsync(Guid userId, DateTime now, CancellationToken ct) =>
+        db.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null)
+            .ExecuteUpdateAsync(set => set.SetProperty(t => t.RevokedAt, now), ct);
 
     private async Task<IssuedTokens> IssueAsync(AppUser user, CancellationToken ct)
     {
         var access = tokens.CreateAccessToken(user);
         var refresh = TokenService.CreateRefreshToken();
         var now = DateTime.UtcNow;
+
+        await TrimActiveAsync(user.Id, now, ct);
 
         db.RefreshTokens.Add(new RefreshToken
         {
@@ -122,5 +155,30 @@ public sealed class AuthService(
         await db.SaveChangesAsync(ct);
 
         return new IssuedTokens(user, access, refresh);
+    }
+
+    // A user keeps a bounded number of live sessions; issuing one more revokes
+    // the oldest so the token table cannot grow with repeated logins.
+    private async Task TrimActiveAsync(Guid userId, DateTime now, CancellationToken ct)
+    {
+        var max = limits.Value.MaxActiveRefreshTokensPerUser;
+        if (max <= 0)
+        {
+            return;
+        }
+
+        var surplus = await db.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAt == null && t.ExpiresAt > now)
+            .OrderByDescending(t => t.CreatedAt)
+            .Skip(max - 1)
+            .Select(t => t.Id)
+            .ToListAsync(ct);
+
+        if (surplus.Count > 0)
+        {
+            await db.RefreshTokens
+                .Where(t => surplus.Contains(t.Id))
+                .ExecuteUpdateAsync(set => set.SetProperty(t => t.RevokedAt, now), ct);
+        }
     }
 }

@@ -2,12 +2,14 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MusiQL.Api;
 using MusiQL.Api.Auth;
 using MusiQL.Api.Endpoints;
+using MusiQL.Api.Errors;
 using MusiQL.Api.Query;
 using MusiQL.Api.Spotify;
 using MusiQL.Core.Mql;
@@ -21,6 +23,11 @@ var connectionString = builder.Configuration.GetConnectionString("MusiQL")
 
 builder.Services.AddMusiQLData(connectionString);
 builder.Services.AddMusiQLApp(connectionString);
+
+builder.Services.Configure<LimitsOptions>(builder.Configuration.GetSection(LimitsOptions.Section));
+var limits = builder.Configuration.GetSection(LimitsOptions.Section).Get<LimitsOptions>() ?? new LimitsOptions();
+
+builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = limits.MaxRequestBodyBytes);
 
 builder.Services
     .AddIdentityCore<AppUser>(options =>
@@ -44,8 +51,14 @@ if (string.IsNullOrWhiteSpace(jwt.SigningKey))
     throw new InvalidOperationException("Jwt:SigningKey is not configured.");
 }
 
+if (builder.Environment.IsProduction())
+{
+    ProductionConfig.Check(builder.Configuration, jwt);
+}
+
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddHostedService<RefreshTokenCleanup>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -70,32 +83,74 @@ builder.Services.AddSingleton(MqlEngine.CreateDefault());
 builder.Services.Configure<QueryOptions>(builder.Configuration.GetSection("Query"));
 builder.Services.PostConfigure<QueryOptions>(options =>
     options.ConnectionString = builder.Configuration.GetConnectionString("Query") ?? connectionString);
+builder.Services.AddSingleton<QueryGate>();
+builder.Services.AddSingleton<OperationLocks>();
 builder.Services.AddScoped<QueryService>();
 builder.Services.AddScoped<PlaylistSnapshotService>();
 
 builder.Services.AddSpotifyIntegration(builder.Configuration);
 
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<BusyExceptionHandler>();
 builder.Services.AddHttpLogging(options =>
     options.LoggingFields = HttpLoggingFields.RequestMethod
         | HttpLoggingFields.RequestPath
         | HttpLoggingFields.ResponseStatusCode
         | HttpLoggingFields.Duration);
 
+// Behind a reverse proxy the client address arrives in X-Forwarded-For. The
+// API only honours it when told how many proxy hops sit in front of it, and it
+// is never published directly, so the immediate peer is always that proxy.
+var trustedHops = builder.Configuration.GetValue<int>("Proxy:TrustedHops");
+if (trustedHops > 0)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = trustedHops;
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+}
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddPolicy(RateLimits.Query, http =>
-    {
-        var key = http.User.UserId()?.ToString()
-            ?? http.Connection.RemoteIpAddress?.ToString()
-            ?? "anonymous";
-        return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(http =>
+        RateLimitPartition.GetFixedWindowLimiter(ClientAddress(http), _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = 30,
+            PermitLimit = limits.RequestsPerTenSeconds,
             Window = TimeSpan.FromSeconds(10)
-        });
-    });
+        }));
+
+    options.AddPolicy(RateLimits.Query, http =>
+        RateLimitPartition.GetFixedWindowLimiter(UserOrAddress(http), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = limits.QueriesPerTenSeconds,
+            Window = TimeSpan.FromSeconds(10)
+        }));
+
+    options.AddPolicy(RateLimits.Write, http =>
+        RateLimitPartition.GetFixedWindowLimiter(UserOrAddress(http), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = limits.WritesPerMinute,
+            Window = TimeSpan.FromMinutes(1)
+        }));
+
+    options.AddPolicy(RateLimits.Auth, http =>
+        RateLimitPartition.GetFixedWindowLimiter(ClientAddress(http), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = limits.AuthPerMinute,
+            Window = TimeSpan.FromMinutes(1)
+        }));
+
+    options.AddPolicy(RateLimits.Register, http =>
+        RateLimitPartition.GetFixedWindowLimiter(ClientAddress(http), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = limits.RegistrationsPerHour,
+            Window = TimeSpan.FromHours(1)
+        }));
 });
 
 const string devCors = "dev";
@@ -106,6 +161,11 @@ builder.Services.AddCors(options =>
         .AllowAnyMethod()));
 
 var app = builder.Build();
+
+if (trustedHops > 0)
+{
+    app.UseForwardedHeaders();
+}
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
@@ -129,7 +189,8 @@ app.UseRateLimiter();
 app.MapGet("/api/health", async (MusiQLDbContext db) =>
 {
     var connected = await CanConnect(db);
-    var report = new HealthReport("musiql-api", connected);
+    var catalogLoaded = connected && await db.Recordings.AnyAsync();
+    var report = new HealthReport("musiql-api", connected, catalogLoaded);
     return Results.Json(
         report,
         statusCode: connected ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable);
@@ -143,6 +204,12 @@ api.MapGroup("/catalog").MapCatalogEndpoints().RequireAuthorization();
 api.MapGroup("/spotify").MapSpotifyEndpoints().RequireAuthorization();
 
 app.Run();
+
+static string ClientAddress(HttpContext http) =>
+    http.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+static string UserOrAddress(HttpContext http) =>
+    http.User.UserId()?.ToString() ?? ClientAddress(http);
 
 static async Task<bool> CanConnect(MusiQLDbContext db)
 {

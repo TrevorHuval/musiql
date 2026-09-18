@@ -11,9 +11,9 @@ public static class SpotifyEndpoints
     public static RouteGroupBuilder MapSpotifyEndpoints(this RouteGroupBuilder group)
     {
         group.MapGet("/status", Status);
-        group.MapPost("/connect", Connect);
-        group.MapPost("/callback", Callback);
-        group.MapPost("/disconnect", Disconnect);
+        group.MapPost("/connect", Connect).RequireRateLimiting(RateLimits.Write);
+        group.MapPost("/callback", Callback).RequireRateLimiting(RateLimits.Write);
+        group.MapPost("/disconnect", Disconnect).RequireRateLimiting(RateLimits.Write);
         group.MapPost("/library/sync", SyncLibrary).RequireRateLimiting(RateLimits.Query);
         return group;
     }
@@ -64,11 +64,13 @@ public static class SpotifyEndpoints
     }
 
     private static async Task<IResult> SyncLibrary(
-        ClaimsPrincipal principal, SpotifyLibraryService library, CancellationToken ct)
+        ClaimsPrincipal principal, SpotifyLibraryService library, OperationLocks locks, CancellationToken ct)
     {
+        var userId = principal.UserId()!.Value;
         try
         {
-            var result = await library.SyncAsync(principal.UserId()!.Value, ct);
+            using var _ = locks.Acquire($"sync:{userId}", "A library sync");
+            var result = await library.SyncAsync(userId, ct);
             return Results.Ok(result);
         }
         catch (Exception ex) when (ex is SpotifyNotConfiguredException or SpotifyNotConnectedException or SpotifyApiException)

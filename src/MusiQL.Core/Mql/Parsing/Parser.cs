@@ -14,6 +14,14 @@ public sealed class Parser
 
     public static MqlQuery Parse(string source)
     {
+        if (source.Length > MqlLimits.MaxSourceLength)
+        {
+            throw new MqlException(new MqlError(
+                MqlErrorCode.QueryTooLong,
+                $"Queries are limited to {MqlLimits.MaxSourceLength:N0} characters.",
+                new TextSpan(MqlLimits.MaxSourceLength, source.Length - MqlLimits.MaxSourceLength)));
+        }
+
         var tokens = new Lexer(source).Tokenize();
         return new Parser(tokens).ParseQuery();
     }
