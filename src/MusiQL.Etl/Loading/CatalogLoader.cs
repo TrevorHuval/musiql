@@ -8,7 +8,9 @@ using NpgsqlTypes;
 
 namespace MusiQL.Etl.Loading;
 
-public sealed class CatalogLoader(string connectionString, Action<string> log)
+// minGenreVotes > 0 trims the catalog to artists with at least that many genre
+// votes; see Sql/trim.sql.
+public sealed class CatalogLoader(string connectionString, Action<string> log, int minGenreVotes = 0)
 {
     private static readonly IReadOnlyDictionary<string, TableSpec> Specs =
         TableSpecs.All.ToDictionary(s => s.Table);
@@ -51,6 +53,13 @@ public sealed class CatalogLoader(string connectionString, Action<string> log)
 
             log("indexing staging");
             Execute(connection, Script("index.sql"));
+
+            if (minGenreVotes > 0)
+            {
+                log($"trimming to artists with at least {minGenreVotes} genre votes");
+                Execute(connection, Script("trim.sql").Replace(
+                    "{min_votes}", minGenreVotes.ToString(CultureInfo.InvariantCulture)));
+            }
 
             log("transforming to catalog shape");
             Execute(connection, Script("transform.sql"));

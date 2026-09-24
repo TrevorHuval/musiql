@@ -22,9 +22,11 @@ switch (command)
               download [--out <dir>] [--base-url <url>]
                   Fetch the latest mbdump + mbdump-derived tarballs (only the files we load).
 
-              load [--sample] [--source <dir>] [--connection <cs>]
+              load [--sample] [--source <dir>] [--connection <cs>] [--min-genre-votes <n>]
                   Apply migrations, stream-load the dump into staging, transform, and swap
                   into the catalog schema. --sample loads the checked-in dev fixture.
+                  --min-genre-votes keeps only artists with at least n genre votes (on the
+                  artist or its albums), for hosts that cannot hold the full catalog.
 
             Connection resolves from --connection, then the MUSIQL_CONNECTION environment
             variable, then the local dev database on port 5442.
@@ -43,7 +45,8 @@ async Task Download(CliOptions o)
 void Load(CliOptions o)
 {
     var connection = EtlDefaults.ConnectionString(o.Value("connection"));
-    var loader = new CatalogLoader(connection, EtlLog.Write);
+    var minVotes = int.TryParse(o.Value("min-genre-votes"), out var parsed) ? parsed : 0;
+    var loader = new CatalogLoader(connection, EtlLog.Write, minVotes);
 
     IDumpSource source;
     if (o.Has("sample"))

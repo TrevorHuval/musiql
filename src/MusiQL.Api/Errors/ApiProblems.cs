@@ -58,6 +58,12 @@ public static class ApiProblems
         statusCode: StatusCodes.Status403Forbidden,
         type: Base + "quota");
 
+    public static IResult QueryTooSlow() => Results.Problem(
+        title: "Query took too long",
+        detail: "Narrow it with a genre, artist, or year range and try again.",
+        statusCode: StatusCodes.Status422UnprocessableEntity,
+        type: Base + "query-timeout");
+
     public static IResult Busy(string detail) => Results.Problem(
         title: "Server busy",
         detail: detail,

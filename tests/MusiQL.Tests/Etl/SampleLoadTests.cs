@@ -62,6 +62,29 @@ public class SampleLoadTests(ITestOutputHelper output)
         Assert.Equal(5, nirvanaInRange);
     }
 
+    [Fact]
+    public void Genre_vote_trim_drops_weakly_tagged_artists_and_their_tracks()
+    {
+        if (!ServerReachable())
+        {
+            output.WriteLine("Postgres not reachable on localhost:5442; skipping trim integration test.");
+            return;
+        }
+
+        const string trimConnection = $"{Server};Database=musiql_etl_trim_test";
+        new CatalogLoader(trimConnection, output.WriteLine, minGenreVotes: 36)
+            .Load(new DirectoryDumpSource(SampleDirectory()));
+
+        using var db = MusiQLDbContextFactory.Create(trimConnection);
+        var artists = db.Artists.Select(a => a.Name).ToList();
+        output.WriteLine($"{artists.Count} artists, {db.Recordings.Count()} recordings after trim");
+
+        Assert.Contains("Pearl Jam", artists);
+        Assert.DoesNotContain("The Smashing Pumpkins", artists);
+        Assert.InRange(artists.Count, 1, 46);
+        Assert.False(db.Recordings.Any(r => r.Artist!.Name == "The Smashing Pumpkins"));
+    }
+
     private static bool ServerReachable()
     {
         try

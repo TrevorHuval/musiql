@@ -22,7 +22,10 @@ SELECT rg.id,
        rg.name,
        ca.artist_id,
        pt.name AS primary_type,
-       m.first_release_year
+       -- MusicBrainz has a few hundred typo'd future dates (e.g. 2913); treat
+       -- them as unknown so they do not top every "order by year desc".
+       CASE WHEN m.first_release_year <= extract(year FROM now()) THEN m.first_release_year END
+           AS first_release_year
 FROM staging.release_group rg
 JOIN staging.live_rg lr ON lr.id = rg.id
 JOIN staging.credit_artist ca ON ca.artist_credit = rg.artist_credit
@@ -30,17 +33,6 @@ JOIN staging.artist a ON a.id = ca.artist_id
 LEFT JOIN staging.release_group_primary_type pt ON pt.id = rg.type
 LEFT JOIN staging.release_group_meta m ON m.id = rg.id;
 CREATE UNIQUE INDEX ON staging.release_group_out (id);
-
-CREATE TABLE staging.release_out AS
-SELECT orl.id,
-       orl.gid AS mbid,
-       orl.name,
-       orl.release_group AS release_group_id,
-       ca.artist_id
-FROM staging.official_release orl
-JOIN staging.release_group_out rgo ON rgo.id = orl.release_group
-JOIN staging.credit_artist ca ON ca.artist_credit = orl.artist_credit
-JOIN staging.artist a ON a.id = ca.artist_id;
 
 CREATE TABLE staging.recording_rg AS
 SELECT DISTINCT t.recording AS recording_id, orl.release_group AS rg_id
@@ -70,10 +62,11 @@ JOIN staging.credit_artist ca ON ca.artist_credit = rec.artist_credit
 JOIN staging.artist a ON a.id = ca.artist_id;
 
 CREATE TABLE staging.artist_out AS
-SELECT a.id, a.gid AS mbid, a.name, a.sort_name, a.begin_year, a.end_year
+SELECT a.id, a.gid AS mbid, a.name, a.sort_name,
+       CASE WHEN a.begin_year <= extract(year FROM now()) THEN a.begin_year END AS begin_year,
+       CASE WHEN a.end_year <= extract(year FROM now()) THEN a.end_year END AS end_year
 FROM staging.artist a
 WHERE a.id IN (SELECT artist_id FROM staging.release_group_out
-               UNION SELECT artist_id FROM staging.release_out
                UNION SELECT artist_id FROM staging.recording_out);
 CREATE UNIQUE INDEX ON staging.artist_out (id);
 

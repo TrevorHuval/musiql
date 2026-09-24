@@ -49,3 +49,6 @@ Thumbs.db
 !/README.md
 docs/
 CLAUDE.md
+
+# MusicBrainz dump downloads and built catalog dumps
+.mbdump-cache/

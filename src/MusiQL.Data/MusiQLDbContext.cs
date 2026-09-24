@@ -61,7 +61,6 @@ public class MusiQLDbContext(DbContextOptions<MusiQLDbContext> options) : DbCont
             e.HasIndex(r => r.Mbid).IsUnique();
             e.HasIndex(r => r.Name);
             e.HasIndex(r => r.FirstReleaseYear);
-            e.HasIndex(r => r.LengthMs);
             e.HasIndex(r => r.ArtistId);
             e.HasIndex(r => r.ReleaseGroupId);
             e.HasOne(r => r.Artist).WithMany().HasForeignKey(r => r.ArtistId);
@@ -71,7 +70,7 @@ public class MusiQLDbContext(DbContextOptions<MusiQLDbContext> options) : DbCont
         model.Entity<ArtistGenre>(e =>
         {
             e.HasKey(ag => new { ag.ArtistId, ag.GenreId });
-            e.HasIndex(ag => ag.GenreId);
+            e.HasIndex(ag => new { ag.GenreId, ag.ArtistId });
             e.HasOne(ag => ag.Artist).WithMany(a => a.Genres).HasForeignKey(ag => ag.ArtistId);
             e.HasOne(ag => ag.Genre).WithMany().HasForeignKey(ag => ag.GenreId);
         });
@@ -79,7 +78,7 @@ public class MusiQLDbContext(DbContextOptions<MusiQLDbContext> options) : DbCont
         model.Entity<ReleaseGroupGenre>(e =>
         {
             e.HasKey(rgg => new { rgg.ReleaseGroupId, rgg.GenreId });
-            e.HasIndex(rgg => rgg.GenreId);
+            e.HasIndex(rgg => new { rgg.GenreId, rgg.ReleaseGroupId });
             e.HasOne(rgg => rgg.ReleaseGroup).WithMany(rg => rg.Genres).HasForeignKey(rgg => rgg.ReleaseGroupId);
             e.HasOne(rgg => rgg.Genre).WithMany().HasForeignKey(rgg => rgg.GenreId);
         });
@@ -87,7 +86,7 @@ public class MusiQLDbContext(DbContextOptions<MusiQLDbContext> options) : DbCont
         model.Entity<RecordingGenre>(e =>
         {
             e.HasKey(rg => new { rg.RecordingId, rg.GenreId });
-            e.HasIndex(rg => rg.GenreId);
+            e.HasIndex(rg => new { rg.GenreId, rg.RecordingId });
             e.HasOne(rg => rg.Recording).WithMany(r => r.Genres).HasForeignKey(rg => rg.RecordingId);
             e.HasOne(rg => rg.Genre).WithMany().HasForeignKey(rg => rg.GenreId);
         });

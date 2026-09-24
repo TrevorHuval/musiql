@@ -16,8 +16,8 @@ SELECT id, mbid, name FROM staging.genre_out;
 INSERT INTO catalog.release_group (id, mbid, name, artist_id, primary_type, first_release_year)
 SELECT id, mbid, name, artist_id, primary_type, first_release_year FROM staging.release_group_out;
 
-INSERT INTO catalog.release (id, mbid, name, release_group_id, artist_id)
-SELECT id, mbid, name, release_group_id, artist_id FROM staging.release_out;
+-- catalog.release is left empty: queries resolve tracks to albums through
+-- release_group, and the table was ~1 GB of rows nothing reads.
 
 INSERT INTO catalog.recording (id, mbid, name, artist_id, length_ms, release_group_id, first_release_year)
 SELECT id, mbid, name, artist_id, length_ms, release_group_id, first_release_year FROM staging.recording_out;

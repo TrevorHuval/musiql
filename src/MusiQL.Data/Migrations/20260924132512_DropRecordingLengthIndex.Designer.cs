@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MusiQL.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MusiQL.Data.Migrations
 {
     [DbContext(typeof(MusiQLDbContext))]
-    partial class MusiQLDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260924132512_DropRecordingLengthIndex")]
+    partial class DropRecordingLengthIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -102,7 +105,7 @@ namespace MusiQL.Data.Migrations
 
                     b.HasKey("ArtistId", "GenreId");
 
-                    b.HasIndex("GenreId", "ArtistId");
+                    b.HasIndex("GenreId");
 
                     b.ToTable("artist_genre", "catalog");
                 });
@@ -196,7 +199,7 @@ namespace MusiQL.Data.Migrations
 
                     b.HasKey("RecordingId", "GenreId");
 
-                    b.HasIndex("GenreId", "RecordingId");
+                    b.HasIndex("GenreId");
 
                     b.ToTable("recording_genre", "catalog");
                 });
@@ -293,7 +296,7 @@ namespace MusiQL.Data.Migrations
 
                     b.HasKey("ReleaseGroupId", "GenreId");
 
-                    b.HasIndex("GenreId", "ReleaseGroupId");
+                    b.HasIndex("GenreId");
 
                     b.ToTable("release_group_genre", "catalog");
                 });
