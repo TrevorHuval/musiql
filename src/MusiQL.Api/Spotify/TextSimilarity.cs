@@ -11,7 +11,7 @@ public static class TextSimilarity
             return "";
         }
 
-        var stripped = StripParentheticals(value);
+        var stripped = TitleCore(value);
 
         var builder = new StringBuilder(stripped.Length);
         var lastSpace = false;
@@ -35,6 +35,15 @@ public static class TextSimilarity
         }
 
         return builder.ToString().Trim();
+    }
+
+    // Spotify appends release variants after " - " ("Song - Remastered 2011",
+    // "Song - Live at Wembley"); MusicBrainz titles carry none of that.
+    public static string TitleCore(string title)
+    {
+        var stripped = StripParentheticals(title);
+        var dash = stripped.IndexOf(" - ", StringComparison.Ordinal);
+        return (dash > 0 ? stripped[..dash] : stripped).Trim();
     }
 
     public static double Ratio(string left, string right)

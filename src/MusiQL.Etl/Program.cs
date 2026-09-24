@@ -13,6 +13,9 @@ switch (command)
     case "load":
         Load(options);
         return 0;
+    case "migrate":
+        Migrate(options);
+        return 0;
     default:
         Console.WriteLine(
             """
@@ -28,6 +31,9 @@ switch (command)
                   --min-genre-votes keeps only artists with at least n genre votes (on the
                   artist or its albums), for hosts that cannot hold the full catalog.
 
+              migrate [--connection <cs>]
+                  Apply catalog schema migrations only, leaving loaded data in place.
+
             Connection resolves from --connection, then the MUSIQL_CONNECTION environment
             variable, then the local dev database on port 5442.
             """);
@@ -40,6 +46,14 @@ async Task Download(CliOptions o)
     var baseUrl = o.Value("base-url") ?? DumpDownloader.DefaultBaseUrl;
     var downloader = new DumpDownloader(baseUrl, outDir, EtlLog.Write);
     await downloader.DownloadAsync();
+}
+
+void Migrate(CliOptions o)
+{
+    using var context = MusiQL.Data.MusiQLDbContextFactory.Create(EtlDefaults.ConnectionString(o.Value("connection")));
+    EtlLog.Write("applying catalog migrations");
+    Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(context.Database);
+    EtlLog.Write("done");
 }
 
 void Load(CliOptions o)

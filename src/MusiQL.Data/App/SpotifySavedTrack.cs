@@ -13,4 +13,8 @@ public class SpotifySavedTrack
     public Guid? RecordingMbid { get; set; }
     public double? Confidence { get; set; }
     public DateTime SyncedAt { get; set; }
+
+    // Last time matching ran and found nothing; unmatched tracks are not
+    // retried on every sync.
+    public DateTime? MatchAttemptedAt { get; set; }
 }

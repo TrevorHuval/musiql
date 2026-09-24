@@ -69,6 +69,37 @@ public class SpotifyLibraryServiceTests(ApiFixture fixture)
         Assert.False(await db.SpotifySavedTracks.AnyAsync(t => t.UserId == ownerId && t.SpotifyTrackId == "sp2"));
     }
 
+    [Fact]
+    public async Task Exact_and_fuzzy_matches_resolve_and_misses_are_remembered()
+    {
+        if (!fixture.Available)
+        {
+            return;
+        }
+
+        var ownerId = await ConnectedOwnerAsync();
+        var client = new FakeSpotifyClient
+        {
+            Saved =
+            [
+                Saved("ex1", "ALIVE", "Pearl Jam", 341000),
+                Saved("fz1", "Smells Like Teen Spirit - Remastered", "Nirvana", 301000),
+                Saved("no1", "Nothing Like This", "Nobody At All", 100000)
+            ]
+        };
+
+        var result = await BuildLibrary(client).SyncAsync(ownerId, default);
+        Assert.Equal(2, result.MatchedCount);
+
+        await using var db = AppDbContextFactory.Create(fixture.ConnectionString);
+        var rows = await db.SpotifySavedTracks.Where(t => t.UserId == ownerId).ToDictionaryAsync(t => t.SpotifyTrackId);
+        Assert.Equal(1.0, rows["ex1"].Confidence);
+        Assert.NotNull(rows["fz1"].RecordingId);
+        Assert.Null(rows["ex1"].MatchAttemptedAt);
+        Assert.Null(rows["no1"].RecordingId);
+        Assert.NotNull(rows["no1"].MatchAttemptedAt);
+    }
+
     private static SpotifySavedItem Saved(string id, string title, string artist, int durationMs) =>
         new(id, title, artist, durationMs, null, DateTime.UtcNow);
 

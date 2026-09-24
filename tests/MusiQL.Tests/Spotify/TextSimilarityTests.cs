@@ -9,7 +9,7 @@ public class TextSimilarityTests
     [InlineData("Heart-Shaped Box", "heart shaped box")]
     [InlineData("Smells Like Teen Spirit (Remastered)", "smells like teen spirit")]
     [InlineData("Björk", "bjork")]
-    [InlineData("Come as You Are - 2021 Remaster", "come as you are 2021 remaster")]
+    [InlineData("Come as You Are - 2021 Remaster", "come as you are")]
     [InlineData("Song (feat. Someone Else)", "song")]
     public void Normalize_folds_noise(string input, string expected)
     {

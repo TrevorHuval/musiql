@@ -12,6 +12,7 @@ public sealed class SpotifyLibraryService(
     MusiQLDbContext catalog)
 {
     private const int PageSize = 50;
+    private static readonly TimeSpan UnmatchedRetryAfter = TimeSpan.FromDays(7);
 
     public async Task<LibrarySyncResponse> SyncAsync(Guid userId, CancellationToken ct)
     {
@@ -24,8 +25,7 @@ public sealed class SpotifyLibraryService(
         var byId = existing.ToDictionary(t => t.SpotifyTrackId);
         db.SpotifySavedTracks.RemoveRange(existing.Where(t => !currentIds.Contains(t.SpotifyTrackId)));
 
-        var library = new Dictionary<long, DateTime>();
-        var matchedCount = 0;
+        var rows = new List<(SpotifySavedItem Item, SpotifySavedTrack Row)>(saved.Count);
         foreach (var item in saved)
         {
             if (!byId.TryGetValue(item.TrackId, out var row))
@@ -40,17 +40,15 @@ public sealed class SpotifyLibraryService(
             row.DurationMs = item.DurationMs;
             row.AddedAt = item.AddedAt;
             row.SyncedAt = now;
+            rows.Add((item, row));
+        }
 
-            if (row.RecordingId is null)
-            {
-                var match = await ResolveCatalogAsync(item, ct);
-                if (match is not null)
-                {
-                    row.RecordingId = match.RecordingId;
-                    row.RecordingMbid = match.Mbid;
-                    row.Confidence = match.Confidence;
-                }
-            }
+        await MatchPendingAsync(rows, now, ct);
+
+        var library = new Dictionary<long, DateTime>();
+        var matchedCount = 0;
+        foreach (var (item, row) in rows)
+        {
 
             if (row.RecordingId is { } recordingId)
             {
@@ -72,6 +70,36 @@ public sealed class SpotifyLibraryService(
         await db.SaveChangesAsync(ct);
 
         return new LibrarySyncResponse(saved.Count, matchedCount, saved.Count - matchedCount, library.Count, now);
+    }
+
+    // Exact artist + title matches are resolved in one query; only what is left
+    // goes through the per-track ISRC and fuzzy paths.
+    private async Task MatchPendingAsync(
+        IReadOnlyList<(SpotifySavedItem Item, SpotifySavedTrack Row)> rows, DateTime now, CancellationToken ct)
+    {
+        var pending = rows
+            .Where(r => r.Row.RecordingId is null
+                && (r.Row.MatchAttemptedAt is null || now - r.Row.MatchAttemptedAt > UnmatchedRetryAfter))
+            .ToList();
+
+        var exact = await catalogMatcher.MatchExactAsync(
+            pending.Select(p => (p.Item.Title, p.Item.Artist, p.Item.DurationMs)).ToList(), ct);
+
+        for (var i = 0; i < pending.Count; i++)
+        {
+            var (item, row) = pending[i];
+            var match = exact.GetValueOrDefault(i) ?? await ResolveCatalogAsync(item, ct);
+            if (match is null)
+            {
+                row.MatchAttemptedAt = now;
+                continue;
+            }
+
+            row.RecordingId = match.RecordingId;
+            row.RecordingMbid = match.Mbid;
+            row.Confidence = match.Confidence;
+            row.MatchAttemptedAt = null;
+        }
     }
 
     private static async Task<List<SpotifySavedItem>> FetchSavedAsync(SpotifyUserSession session, CancellationToken ct)
