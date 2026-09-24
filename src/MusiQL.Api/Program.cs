@@ -84,6 +84,8 @@ builder.Services.Configure<QueryOptions>(builder.Configuration.GetSection("Query
 builder.Services.PostConfigure<QueryOptions>(options =>
     options.ConnectionString = builder.Configuration.GetConnectionString("Query") ?? connectionString);
 builder.Services.AddSingleton<QueryGate>();
+builder.Services.AddSingleton<GenreSelectivity>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<GenreSelectivity>());
 builder.Services.AddSingleton<OperationLocks>();
 builder.Services.AddScoped<QueryService>();
 builder.Services.AddScoped<PlaylistSnapshotService>();

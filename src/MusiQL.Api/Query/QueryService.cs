@@ -9,13 +9,18 @@ using MusiQL.Data;
 namespace MusiQL.Api.Query;
 
 public sealed class QueryService(
-    MqlEngine engine, MusiQLDbContext catalog, QueryGate gate, IOptions<QueryOptions> options)
+    MqlEngine engine, MusiQLDbContext catalog, QueryGate gate, IOptions<QueryOptions> options,
+    GenreSelectivity? genres = null)
 {
     public const int DefaultPageSize = 50;
     public const int MaxPageSize = 100;
 
     public MqlCompilation Compile(string mql, Guid? callerUserId) =>
-        engine.Compile(mql, new CompileContext { CallerUserId = callerUserId });
+        engine.Compile(mql, new CompileContext
+        {
+            CallerUserId = callerUserId,
+            SelectiveGenres = genres?.Selective ?? new HashSet<string>()
+        });
 
     public async Task<QueryResult> ExecuteAsync(CompiledQuery query, CancellationToken ct)
     {

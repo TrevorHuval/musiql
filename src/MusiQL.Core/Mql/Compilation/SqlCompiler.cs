@@ -10,16 +10,21 @@ public sealed class SqlCompiler
     private const string LimitParam = "@row_limit";
 
     private readonly EntitySchema _entity;
+    private readonly CompileContext _context;
     private readonly List<MqlParameter> _parameters = [];
     private int _next;
 
-    private SqlCompiler(EntitySchema entity) => _entity = entity;
+    private SqlCompiler(EntitySchema entity, CompileContext context)
+    {
+        _entity = entity;
+        _context = context;
+    }
 
     public static CompiledQuery Compile(MqlQuery query, SchemaRegistry registry, CompileContext context)
     {
         var entity = registry.Entity(query.Entity.Name)
             ?? throw new InvalidOperationException($"Entity '{query.Entity.Name}' is not in the registry.");
-        return new SqlCompiler(entity).Build(query, context);
+        return new SqlCompiler(entity, context).Build(query, context);
     }
 
     private CompiledQuery Build(MqlQuery query, CompileContext context)
@@ -101,7 +106,7 @@ public sealed class SqlCompiler
         {
             var lowered = inExpr.Values.Select(v => ((StringLiteral)v).Value.ToLowerInvariant()).ToArray();
             var param = AddParam(lowered);
-            return GenreMembership($"lower(g.name) = ANY({param})", negate: false);
+            return GenreMembership($"lower(g.name) = ANY({param})", negate: false, Selective(lowered));
         }
 
         if (field.Kind == FieldKind.StringScalar)
@@ -140,15 +145,28 @@ public sealed class SqlCompiler
     private string CompileGenreEquality(StringLiteral value, bool negate)
     {
         var param = AddParam(value.Value);
-        return GenreMembership($"lower(g.name) = lower({param})", negate);
+        return GenreMembership(
+            $"lower(g.name) = lower({param})", negate, Selective([value.Value.ToLowerInvariant()]));
     }
 
-    private string GenreMembership(string namePredicate, bool negate)
+    private bool Selective(IEnumerable<string> lowered) => lowered.All(_context.SelectiveGenres.Contains);
+
+    // Two shapes for the same membership test. A small genre resolves each
+    // level's ids once and probes indexes with them, which is what a query with
+    // no other filter needs. A broad genre keeps correlated EXISTS, which the
+    // planner turns into a hashed filter behind a year or artist predicate;
+    // materializing a million-id array there would be far slower.
+    private string GenreMembership(string namePredicate, bool negate, bool selective = false)
     {
-        var levels = _entity.GenreLinks.Select(link =>
-            $"EXISTS (SELECT 1 FROM catalog.{link.LinkTable} lg " +
-            $"JOIN catalog.genre g ON g.id = lg.genre_id " +
-            $"WHERE lg.{link.ForeignKeyColumn} = {link.RootExpression} AND {namePredicate})");
+        var levels = selective && !negate
+            ? _entity.GenreLinks.Select(link =>
+                $"{link.RootExpression} = ANY(ARRAY(SELECT lg.{link.ForeignKeyColumn} " +
+                $"FROM catalog.{link.LinkTable} lg JOIN catalog.genre g ON g.id = lg.genre_id " +
+                $"WHERE {namePredicate}))")
+            : _entity.GenreLinks.Select(link =>
+                $"EXISTS (SELECT 1 FROM catalog.{link.LinkTable} lg " +
+                $"JOIN catalog.genre g ON g.id = lg.genre_id " +
+                $"WHERE lg.{link.ForeignKeyColumn} = {link.RootExpression} AND {namePredicate})");
         var membership = $"({string.Join(" OR ", levels)})";
         return negate ? $"(NOT {membership})" : membership;
     }

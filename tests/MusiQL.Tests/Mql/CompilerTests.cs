@@ -8,6 +8,23 @@ public class CompilerTests
     private static readonly MqlEngine Engine = MqlEngine.CreateDefault();
 
     [Fact]
+    public void Selective_genre_probes_ids_and_negation_stays_correlated()
+    {
+        var context = new CompileContext { SelectiveGenres = new HashSet<string> { "acid house" } };
+
+        var probe = Engine.Compile("albums where genre = \"Acid House\"", context).Query!.Sql;
+        Assert.Contains("rg.id = ANY(ARRAY(SELECT lg.release_group_id", probe);
+        Assert.Contains("rg.artist_id = ANY(ARRAY(SELECT lg.artist_id", probe);
+        Assert.DoesNotContain("EXISTS", probe);
+
+        var negated = Engine.Compile("albums where genre != \"acid house\"", context).Query!.Sql;
+        Assert.Contains("NOT (EXISTS", negated);
+
+        var broad = Engine.Compile("albums where genre = \"rock\"", context).Query!.Sql;
+        Assert.Contains("EXISTS", broad);
+    }
+
+    [Fact]
     public void Numeric_comparison()
     {
         var snapshot = Compile("tracks where year >= 1990 limit 10");

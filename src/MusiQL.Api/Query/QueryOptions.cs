@@ -14,6 +14,10 @@ public sealed class QueryOptions
     public int MaxConcurrent { get; set; } = 4;
     public TimeSpan AdmissionTimeout { get; set; } = TimeSpan.FromSeconds(2);
 
+    // Genres with fewer total genre links than this compile to an id-probe
+    // filter; see SqlCompiler.GenreMembership.
+    public int SelectiveGenreLinks { get; set; } = 20000;
+
     // Production refuses to run MQL over the owner connection unless this is set.
     public bool AllowOwnerConnection { get; set; }
 }

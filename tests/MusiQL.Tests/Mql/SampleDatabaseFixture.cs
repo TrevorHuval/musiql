@@ -32,9 +32,14 @@ public sealed class SampleDatabaseFixture
 
     public MusiQLDbContext CreateContext() => MusiQLDbContextFactory.Create(ConnectionString);
 
-    public async Task<QueryResult> RunAsync(string mql, Guid? userId = null)
+    public async Task<QueryResult> RunAsync(
+        string mql, Guid? userId = null, IReadOnlySet<string>? selectiveGenres = null)
     {
-        var compilation = Engine.Compile(mql, new CompileContext { CallerUserId = userId });
+        var compilation = Engine.Compile(mql, new CompileContext
+        {
+            CallerUserId = userId,
+            SelectiveGenres = selectiveGenres ?? new HashSet<string>()
+        });
         if (!compilation.Success)
         {
             throw new InvalidOperationException(compilation.Errors[0].Message);

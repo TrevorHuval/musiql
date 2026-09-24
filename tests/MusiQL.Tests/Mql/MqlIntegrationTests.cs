@@ -27,6 +27,29 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
         Assert.DoesNotContain("Nirvana", artists);
     }
 
+    [Theory]
+    [InlineData("tracks where genre = \"grunge\" order by year desc limit 500")]
+    [InlineData("tracks where genre in (\"grunge\", \"hip hop\") limit 500")]
+    [InlineData("albums where genre = \"grunge\" order by votes desc limit 500")]
+    [InlineData("artists where genre = \"grunge\" limit 500")]
+    [InlineData("tracks where genre != \"grunge\" and year = 1991 limit 500")]
+    public async Task Selective_genre_shape_returns_the_same_rows(string mql)
+    {
+        if (Unavailable())
+        {
+            return;
+        }
+
+        var genres = new HashSet<string> { "grunge", "hip hop" };
+        var probe = await fixture.RunAsync(mql, selectiveGenres: genres);
+        var correlated = await fixture.RunAsync(mql);
+
+        Assert.NotEmpty(correlated.Rows);
+        Assert.Equal(
+            correlated.Rows.Select(r => (Guid)r[0]!).Order(),
+            probe.Rows.Select(r => (Guid)r[0]!).Order());
+    }
+
     [Fact]
     public async Task Genre_and_year_filters_stay_within_bounds()
     {
