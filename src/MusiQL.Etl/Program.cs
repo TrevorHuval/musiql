@@ -52,6 +52,8 @@ void Migrate(CliOptions o)
 {
     using var context = MusiQL.Data.MusiQLDbContextFactory.Create(EtlDefaults.ConnectionString(o.Value("connection")));
     EtlLog.Write("applying catalog migrations");
+    // Index migrations on a full catalog take minutes; no command timeout.
+    Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.SetCommandTimeout(context.Database, TimeSpan.Zero);
     Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(context.Database);
     EtlLog.Write("done");
 }

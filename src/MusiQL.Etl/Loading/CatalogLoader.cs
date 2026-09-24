@@ -28,6 +28,7 @@ public sealed class CatalogLoader(string connectionString, Action<string> log, i
         log("applying migrations");
         using (var context = MusiQLDbContextFactory.Create(connectionString))
         {
+            context.Database.SetCommandTimeout(TimeSpan.Zero);
             context.Database.Migrate();
         }
 
