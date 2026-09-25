@@ -102,3 +102,19 @@ JOIN staging.tag_genre tg ON tg.tag_id = rt.tag
 JOIN staging.recording_out ro ON ro.id = rt.recording
 GROUP BY rt.recording, tg.genre_id
 HAVING sum(rt.count) > 0;
+
+-- A genre only counts for an entity when it carries at least a quarter of the
+-- votes of that entity's top tag. One or two stray "grunge" votes on R.E.M.
+-- would otherwise make every R.E.M. track grunge, and popularity ranking puts
+-- exactly those famous artists first. Single-tag entities are unaffected.
+DELETE FROM staging.artist_genre_out o
+USING (SELECT artist_id, max(votes) AS top FROM staging.artist_genre_out GROUP BY artist_id) t
+WHERE t.artist_id = o.artist_id AND o.votes < 0.25 * t.top;
+
+DELETE FROM staging.release_group_genre_out o
+USING (SELECT release_group_id, max(votes) AS top FROM staging.release_group_genre_out GROUP BY release_group_id) t
+WHERE t.release_group_id = o.release_group_id AND o.votes < 0.25 * t.top;
+
+DELETE FROM staging.recording_genre_out o
+USING (SELECT recording_id, max(votes) AS top FROM staging.recording_genre_out GROUP BY recording_id) t
+WHERE t.recording_id = o.recording_id AND o.votes < 0.25 * t.top;
