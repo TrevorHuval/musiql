@@ -73,8 +73,10 @@ public sealed class CatalogLoader(string connectionString, Action<string> log, i
                 swap.Commit();
             }
 
-            log("analyzing catalog");
-            Execute(connection, "ANALYZE catalog.artist, catalog.genre, catalog.release_group, catalog.release, "
+            // VACUUM as well as ANALYZE: a freshly loaded table has no visibility
+            // map, and without one every index-only scan still visits the heap.
+            log("vacuuming and analyzing catalog");
+            Execute(connection, "VACUUM (ANALYZE) catalog.artist, catalog.genre, catalog.release_group, catalog.release, "
                 + "catalog.recording, catalog.artist_genre, catalog.release_group_genre, catalog.recording_genre;");
         }
         finally
