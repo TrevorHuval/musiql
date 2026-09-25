@@ -117,3 +117,14 @@
 .comboToggle:hover {
   color: var(--paper);
 }
+
+/* Trailing row of a paged list: loading more, or the end of the list. Quiet,
+   mono, centred so it reads as list status rather than an option. */
+.listEnd {
+  padding: 8px 9px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--paper-4);
+}

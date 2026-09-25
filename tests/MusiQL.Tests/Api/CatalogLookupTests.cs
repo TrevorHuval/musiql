@@ -21,6 +21,25 @@ public class CatalogLookupTests(ApiFixture fixture, ITestOutputHelper output)
     }
 
     [Fact]
+    public async Task Genre_search_matches_inside_names_and_pages_without_overlap()
+    {
+        if (Skip())
+        {
+            return;
+        }
+
+        var client = await fixture.RegisterClientAsync();
+        var hop = await client.GetFromJsonAsync<List<Suggestion>>("/api/catalog/genres?q=hop");
+        Assert.Contains(hop!, g => g.Name.Equals("hip hop", StringComparison.OrdinalIgnoreCase));
+
+        var first = await client.GetFromJsonAsync<List<Suggestion>>("/api/catalog/genres?limit=3&offset=0");
+        var second = await client.GetFromJsonAsync<List<Suggestion>>("/api/catalog/genres?limit=3&offset=3");
+        Assert.Equal(3, first!.Count);
+        Assert.Equal(3, second!.Count);
+        Assert.Empty(first.Select(g => g.Mbid).Intersect(second.Select(g => g.Mbid)));
+    }
+
+    [Fact]
     public async Task Artist_autocomplete_matches_a_prefix_case_insensitively()
     {
         if (Skip())

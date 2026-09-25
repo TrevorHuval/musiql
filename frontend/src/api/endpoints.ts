@@ -60,8 +60,12 @@ export const query = {
 
 export const catalog = {
   fields: () => apiRequest<SchemaResponse>('/api/catalog/fields'),
-  genres: (q: string, limit = 20) =>
-    apiRequest<Suggestion[]>(`/api/catalog/genres?q=${encodeURIComponent(q)}&limit=${limit}`),
-  artists: (q: string, limit = 20) =>
-    apiRequest<Suggestion[]>(`/api/catalog/artists?q=${encodeURIComponent(q)}&limit=${limit}`),
+  genres: (q: string, limit = 20, offset = 0) =>
+    apiRequest<Suggestion[]>(
+      `/api/catalog/genres?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`,
+    ),
+  artists: (q: string, limit = 20, offset = 0) =>
+    apiRequest<Suggestion[]>(
+      `/api/catalog/artists?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`,
+    ),
 }

@@ -11,6 +11,7 @@ public static class CatalogEndpoints
 {
     private const int DefaultLimit = 20;
     private const int MaxLimit = 50;
+    private const int MaxOffset = 5000;
 
     public static RouteGroupBuilder MapCatalogEndpoints(this RouteGroupBuilder group)
     {
@@ -20,22 +21,30 @@ public static class CatalogEndpoints
         return group;
     }
 
-    private static async Task<IResult> Genres(string? q, int? limit, MusiQLDbContext db, CancellationToken ct)
+    // Genres match anywhere in the name ("house" finds "acid house"), with names
+    // that start with the text ranked first. The table is ~2k rows.
+    private static async Task<IResult> Genres(
+        string? q, int? limit, int? offset, MusiQLDbContext db, CancellationToken ct)
     {
-        var take = Clamp(limit);
         var query = string.IsNullOrWhiteSpace(q)
-            ? db.Genres.OrderBy(g => g.Name)
-            : db.Genres.Where(g => EF.Functions.Like(g.Name.ToLower(), Prefix(q))).OrderBy(g => g.Name);
+            ? db.Genres.OrderBy(g => g.Name).ThenBy(g => g.Id)
+            : db.Genres
+                .Where(g => EF.Functions.Like(g.Name.ToLower(), "%" + Escape(q) + "%"))
+                .OrderByDescending(g => EF.Functions.Like(g.Name.ToLower(), Prefix(q)))
+                .ThenBy(g => g.Name)
+                .ThenBy(g => g.Id);
 
         var results = await query
-            .Take(take)
+            .Skip(Skip(offset))
+            .Take(Clamp(limit))
             .Select(g => new Suggestion(g.Mbid, g.Name))
             .ToListAsync(ct);
 
         return Results.Ok(results);
     }
 
-    private static async Task<IResult> Artists(string? q, int? limit, MusiQLDbContext db, CancellationToken ct)
+    private static async Task<IResult> Artists(
+        string? q, int? limit, int? offset, MusiQLDbContext db, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(q))
         {
@@ -45,6 +54,8 @@ public static class CatalogEndpoints
         var results = await db.Artists
             .Where(a => EF.Functions.Like(a.Name.ToLower(), Prefix(q)))
             .OrderBy(a => a.Name)
+            .ThenBy(a => a.Id)
+            .Skip(Skip(offset))
             .Take(Clamp(limit))
             .Select(a => new Suggestion(a.Mbid, a.Name))
             .ToListAsync(ct);
@@ -99,6 +110,10 @@ public static class CatalogEndpoints
 
     private static int Clamp(int? limit) => Math.Clamp(limit ?? DefaultLimit, 1, MaxLimit);
 
-    private static string Prefix(string q) =>
-        q.Trim().ToLowerInvariant().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+    private static int Skip(int? offset) => Math.Clamp(offset ?? 0, 0, MaxOffset);
+
+    private static string Prefix(string q) => Escape(q) + "%";
+
+    private static string Escape(string q) =>
+        q.Trim().ToLowerInvariant().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 }
