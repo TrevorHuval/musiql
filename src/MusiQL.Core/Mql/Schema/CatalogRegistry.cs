@@ -61,7 +61,8 @@ public static class CatalogRegistry
         ],
         librarySemiJoinSql:
             "SELECT 1 FROM app.user_library ul WHERE ul.recording_id = r.id AND ul.user_id = @caller_user_id",
-        defaultOrderField: "popularity");
+        defaultOrderField: "popularity",
+        genreRank: new GenreRank("genre_top_recording", "recording_id", "r.id"));
 
     private static EntitySchema Albums() => new(
         name: "albums",

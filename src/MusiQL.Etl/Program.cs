@@ -19,6 +19,10 @@ switch (command)
     case "popularity":
         await Popularity(options);
         return 0;
+    case "rank":
+        await new MusiQL.Etl.Popularity.GenreRanker(
+            EtlDefaults.ConnectionString(options.Value("connection")), EtlLog.Write).RankAsync(default);
+        return 0;
     default:
         Console.WriteLine(
             """
@@ -37,6 +41,10 @@ switch (command)
               popularity [--only artist,release_group,recording] [--restart] [--connection <cs>]
                   Fetch ListenBrainz listener counts into catalog.*_popularity. Resumable:
                   a rerun continues after the last stored id unless --restart is given.
+                  Ends by rebuilding the per-genre popularity ranking.
+
+              rank [--connection <cs>]
+                  Rebuild each genre's ranked top tracks (catalog.genre_top_recording).
 
               migrate [--connection <cs>]
                   Apply catalog schema migrations only, leaving loaded data in place.
@@ -63,6 +71,7 @@ async Task Popularity(CliOptions o)
     Console.CancelKeyPress += (_, e) => { e.Cancel = true; cancel.Cancel(); };
     var fetcher = new MusiQL.Etl.Popularity.PopularityFetcher(connection, EtlLog.Write);
     await fetcher.FetchAsync(only, o.Has("restart"), o.Value("base-url") ?? MusiQL.Etl.Popularity.PopularityFetcher.DefaultBaseUrl, cancel.Token);
+    await new MusiQL.Etl.Popularity.GenreRanker(connection, EtlLog.Write).RankAsync(cancel.Token);
 }
 
 void Migrate(CliOptions o)

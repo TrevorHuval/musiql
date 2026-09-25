@@ -87,6 +87,49 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
     }
 
     [Fact]
+    public async Task Precomputed_genre_ranking_matches_a_plain_popularity_sort()
+    {
+        if (Unavailable())
+        {
+            return;
+        }
+
+        await using var connection = new Npgsql.NpgsqlConnection(fixture.ConnectionString);
+        await connection.OpenAsync();
+        async Task Exec(string sql)
+        {
+            await using var command = new Npgsql.NpgsqlCommand(sql, connection);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        const string mql = "tracks where genre = \"grunge\" and year between 1990 and 2004 limit 500";
+        await Exec("""
+            DELETE FROM catalog.recording_popularity;
+            INSERT INTO catalog.recording_popularity (recording_id, listeners, listens)
+            SELECT id, 1000 + (id * 37) % 5000, 0 FROM catalog.recording WHERE id % 3 <> 0;
+            """);
+
+        try
+        {
+            await Exec("TRUNCATE catalog.genre_top_recording");
+            var plain = await fixture.RunAsync(mql);
+
+            await new MusiQL.Etl.Popularity.GenreRanker(fixture.ConnectionString, _ => { }).RankAsync(default);
+            var ranked = await fixture.RunAsync(mql);
+
+            // Same tracks in the same popularity order; tracks with equal counts
+            // may come in either order.
+            Assert.NotEmpty(ranked.Rows);
+            Assert.Equal(plain.Rows.Select(r => (int)r[6]!), ranked.Rows.Select(r => (int)r[6]!));
+            Assert.Equal(plain.Rows.Select(r => (Guid)r[0]!).Order(), ranked.Rows.Select(r => (Guid)r[0]!).Order());
+        }
+        finally
+        {
+            await Exec("DELETE FROM catalog.recording_popularity; TRUNCATE catalog.genre_top_recording;");
+        }
+    }
+
+    [Fact]
     public async Task Genre_and_year_filters_stay_within_bounds()
     {
         if (Unavailable())

@@ -53,9 +53,11 @@ public sealed class SqlCompiler
         var limit = EffectiveLimit(query, context);
         _parameters.Add(new MqlParameter(LimitParam, limit));
 
-        var sql = RanksKnownFirst(order)
-            ? KnownFirst(predicates, order[0].Field)
-            : Plain(predicates, order);
+        var sql = RanksByPopularity(order) && RankedGenre(query.Where) is { } genre && _entity.GenreRank is { } rank
+            ? GenreRanked(predicates, RankedPredicates(query, genre.Comparison), order[0].Field, rank, genre.Name)
+            : RanksKnownFirst(order)
+                ? KnownFirst(predicates, order[0].Field)
+                : Plain(predicates, order);
 
         return new CompiledQuery(
             sql, _parameters, _entity.Name, _entity.ResultColumns, limit, query.FromLibrary);
@@ -88,7 +90,71 @@ public sealed class SqlCompiler
     // rows: sorting that small set is cheaper than scanning the popularity index
     // for the few rows that match.
     private bool RanksKnownFirst(List<(FieldSchema Field, bool Descending)> order) =>
-        order is [{ Descending: true, Field.NullsLast: true }] && !_probedSelectiveGenre && !_fromLibrary;
+        RanksByPopularity(order) && !_probedSelectiveGenre;
+
+    private bool RanksByPopularity(List<(FieldSchema Field, bool Descending)> order) =>
+        order is [{ Descending: true, Field.NullsLast: true }] && !_fromLibrary;
+
+    // A "genre = X" that every result must satisfy: a top-level conjunct, not
+    // inside an OR or NOT. Only then can the precomputed ranking drive the query.
+    private (string Name, ComparisonExpr Comparison)? RankedGenre(MqlExpr? where) => where switch
+    {
+        AndExpr and => RankedGenre(and.Left) ?? RankedGenre(and.Right),
+        ComparisonExpr { Op: ComparisonOp.Equal, Value: StringLiteral name } comparison
+            when _entity.Field(comparison.Field.Name)?.Kind == FieldKind.GenreMembership => (name.Value, comparison),
+        _ => null
+    };
+
+    // The filter for the ranked branch, minus the genre test the ranking join
+    // already guarantees. Left in, it makes the planner gather every member of
+    // the genre instead of walking the ranking in order.
+    private List<string> RankedPredicates(MqlQuery query, ComparisonExpr genre)
+    {
+        var predicates = new List<string>();
+        if (Without(query.Where, genre) is { } rest)
+        {
+            predicates.Add(CompileExpr(rest));
+        }
+
+        return predicates;
+    }
+
+    private static MqlExpr? Without(MqlExpr? expr, MqlExpr target) => expr switch
+    {
+        null => null,
+        _ when ReferenceEquals(expr, target) => null,
+        AndExpr and => (Without(and.Left, target), Without(and.Right, target)) switch
+        {
+            (null, var right) => right,
+            (var left, null) => left,
+            (var left, var right) => and with { Left = left, Right = right }
+        },
+        _ => expr
+    };
+
+    // Read the genre's precomputed top tracks in rank order, applying the rest
+    // of the filter as it goes; only if that runs out does the second branch
+    // search the genre's remaining members (beyond the cap, or of unknown
+    // popularity) the slow way. The outer LIMIT stops at whichever fills it.
+    private string GenreRanked(
+        List<string> predicates, List<string> rankedPredicates, FieldSchema rankField, GenreRank rank, string genre)
+    {
+        var name = AddParam(genre);
+        var genreId = $"(SELECT g.id FROM catalog.genre g WHERE lower(g.name) = lower({name}))";
+        var filter = string.Join(" AND ", predicates);
+        var rankedFilter = rankedPredicates.Count > 0 ? " WHERE " + string.Join(" AND ", rankedPredicates) : "";
+
+        var ranked =
+            $"SELECT {_entity.ProjectionSql} FROM {_entity.FromSql} " +
+            $"JOIN catalog.{rank.Table} gt ON gt.{rank.MemberColumn} = {rank.RootExpression} AND gt.genre_id = {genreId}" +
+            $"{rankedFilter} ORDER BY gt.rank LIMIT {LimitParam}";
+        var rest =
+            $"SELECT {_entity.ProjectionSql} FROM {_entity.FromSql} WHERE {filter} AND NOT EXISTS (" +
+            $"SELECT 1 FROM catalog.{rank.Table} gt WHERE gt.genre_id = {genreId} AND gt.{rank.MemberColumn} = {rank.RootExpression}) " +
+            $"ORDER BY {rankField.SqlExpression} DESC NULLS LAST LIMIT {LimitParam}";
+
+        return $"SELECT * FROM (({ranked}) UNION ALL ({rest})) ranked LIMIT {LimitParam}";
+    }
 
     private string KnownFirst(List<string> predicates, FieldSchema rank)
     {

@@ -2,6 +2,9 @@ namespace MusiQL.Core.Mql.Schema;
 
 public sealed record GenreLink(string LinkTable, string ForeignKeyColumn, string RootExpression);
 
+// A precomputed per-genre popularity ranking (see catalog.genre_top_recording).
+public sealed record GenreRank(string Table, string MemberColumn, string RootExpression);
+
 public sealed record ResultColumn(string Name, Type ClrType);
 
 public sealed class EntitySchema
@@ -17,9 +20,11 @@ public sealed class EntitySchema
         IReadOnlyDictionary<string, string> aliases,
         IReadOnlyList<GenreLink> genreLinks,
         string librarySemiJoinSql,
-        string? defaultOrderField = null)
+        string? defaultOrderField = null,
+        GenreRank? genreRank = null)
     {
         DefaultOrderField = defaultOrderField;
+        GenreRank = genreRank;
         Name = name;
         FromSql = fromSql;
         ProjectionSql = projectionSql;
@@ -51,6 +56,8 @@ public sealed class EntitySchema
 
     // Field ranked descending when a query gives no order of its own.
     public string? DefaultOrderField { get; }
+
+    public GenreRank? GenreRank { get; }
 
     public string LibrarySemiJoinSql { get; }
 
