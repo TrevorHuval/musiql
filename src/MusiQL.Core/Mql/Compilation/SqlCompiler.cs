@@ -161,7 +161,9 @@ public sealed class SqlCompiler
         var filter = predicates.Count > 0 ? string.Join(" AND ", predicates) + " AND " : "";
         var select = $"SELECT {_entity.ProjectionSql} FROM {_entity.FromSql} WHERE {filter}";
         return $"SELECT * FROM (" +
-            $"({select}{rank.SqlExpression} IS NOT NULL ORDER BY {rank.SqlExpression} DESC LIMIT {LimitParam}) " +
+            // NULLS LAST is redundant after IS NOT NULL but must match the index's
+            // ordering, or the planner sorts the whole table instead of walking it.
+            $"({select}{rank.SqlExpression} IS NOT NULL ORDER BY {rank.SqlExpression} DESC NULLS LAST LIMIT {LimitParam}) " +
             $"UNION ALL ({select}{rank.SqlExpression} IS NULL LIMIT {LimitParam})" +
             $") ranked LIMIT {LimitParam}";
     }
