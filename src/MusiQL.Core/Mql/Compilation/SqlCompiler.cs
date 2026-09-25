@@ -14,6 +14,7 @@ public sealed class SqlCompiler
     private readonly List<MqlParameter> _parameters = [];
     private int _next;
     private bool _fromLibrary;
+    private bool _probedSelectiveGenre;
 
     private SqlCompiler(EntitySchema entity, CompileContext context)
     {
@@ -30,10 +31,6 @@ public sealed class SqlCompiler
 
     private CompiledQuery Build(MqlQuery query, CompileContext context)
     {
-        var sql = new StringBuilder();
-        sql.Append("SELECT ").Append(_entity.ProjectionSql);
-        sql.Append(" FROM ").Append(_entity.FromSql);
-
         var predicates = new List<string>();
         _fromLibrary = query.FromLibrary;
         if (query.FromLibrary)
@@ -47,27 +44,60 @@ public sealed class SqlCompiler
             predicates.Add(CompileExpr(query.Where));
         }
 
+        var order = query.OrderBy.Count > 0
+            ? query.OrderBy.Select(key => (Field: _entity.Field(key.Field.Name)!, key.Descending)).ToList()
+            : _entity.DefaultOrderField is { } fallback
+                ? [(Field: _entity.Field(fallback)!, Descending: true)]
+                : [];
+
+        var limit = EffectiveLimit(query, context);
+        _parameters.Add(new MqlParameter(LimitParam, limit));
+
+        var sql = RanksKnownFirst(order)
+            ? KnownFirst(predicates, order[0].Field)
+            : Plain(predicates, order);
+
+        return new CompiledQuery(
+            sql, _parameters, _entity.Name, _entity.ResultColumns, limit, query.FromLibrary);
+    }
+
+    private string Plain(List<string> predicates, List<(FieldSchema Field, bool Descending)> order)
+    {
+        var sql = new StringBuilder();
+        sql.Append("SELECT ").Append(_entity.ProjectionSql).Append(" FROM ").Append(_entity.FromSql);
         if (predicates.Count > 0)
         {
             sql.Append(" WHERE ").Append(string.Join(" AND ", predicates));
         }
 
-        if (query.OrderBy.Count > 0)
+        if (order.Count > 0)
         {
-            var keys = query.OrderBy.Select(key => OrderKey(_entity.Field(key.Field.Name)!, key.Descending));
-            sql.Append(" ORDER BY ").Append(string.Join(", ", keys));
-        }
-        else if (_entity.DefaultOrderField is { } fallback)
-        {
-            sql.Append(" ORDER BY ").Append(OrderKey(_entity.Field(fallback)!, descending: true));
+            sql.Append(" ORDER BY ").Append(string.Join(", ", order.Select(o => OrderKey(o.Field, o.Descending))));
         }
 
-        var limit = EffectiveLimit(query, context);
-        _parameters.Add(new MqlParameter(LimitParam, limit));
-        sql.Append(" LIMIT ").Append(LimitParam);
+        return sql.Append(" LIMIT ").Append(LimitParam).ToString();
+    }
 
-        return new CompiledQuery(
-            sql.ToString(), _parameters, _entity.Name, _entity.ResultColumns, limit, query.FromLibrary);
+    // Popularity lives on the optional side of a LEFT JOIN, so a plain ORDER BY
+    // cannot walk its index and sorts every match instead (millions for a broad
+    // genre). Split it: rows with a known value, taken in index order, then the
+    // unknown ones. The outer LIMIT stops the append as soon as the first branch
+    // fills it, so the second branch usually never runs.
+    //
+    // Not used when a small genre or the user's library already narrows the
+    // rows: sorting that small set is cheaper than scanning the popularity index
+    // for the few rows that match.
+    private bool RanksKnownFirst(List<(FieldSchema Field, bool Descending)> order) =>
+        order is [{ Descending: true, Field.NullsLast: true }] && !_probedSelectiveGenre && !_fromLibrary;
+
+    private string KnownFirst(List<string> predicates, FieldSchema rank)
+    {
+        var filter = predicates.Count > 0 ? string.Join(" AND ", predicates) + " AND " : "";
+        var select = $"SELECT {_entity.ProjectionSql} FROM {_entity.FromSql} WHERE {filter}";
+        return $"SELECT * FROM (" +
+            $"({select}{rank.SqlExpression} IS NOT NULL ORDER BY {rank.SqlExpression} DESC LIMIT {LimitParam}) " +
+            $"UNION ALL ({select}{rank.SqlExpression} IS NULL LIMIT {LimitParam})" +
+            $") ranked LIMIT {LimitParam}";
     }
 
     private string CompileExpr(MqlExpr expr) => expr switch
@@ -159,8 +189,12 @@ public sealed class SqlCompiler
             ? $"{field.SqlExpression} DESC{(field.NullsLast ? " NULLS LAST" : "")}"
             : $"{field.SqlExpression} ASC";
 
-    private bool Selective(IEnumerable<string> lowered) =>
-        !_fromLibrary && lowered.All(_context.SelectiveGenres.Contains);
+    private bool Selective(IEnumerable<string> lowered)
+    {
+        var selective = !_fromLibrary && lowered.All(_context.SelectiveGenres.Contains);
+        _probedSelectiveGenre |= selective;
+        return selective;
+    }
 
     // Two shapes for the same membership test. A small genre resolves each
     // level's ids once and probes indexes with them, which is what a query with
