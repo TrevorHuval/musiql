@@ -43,6 +43,7 @@ public sealed class SpotifyLibraryService(
             rows.Add((item, row));
         }
 
+        await DropStaleMatchesAsync(rows, ct);
         await MatchPendingAsync(rows, now, ct);
 
         var library = new Dictionary<long, DateTime>();
@@ -70,6 +71,36 @@ public sealed class SpotifyLibraryService(
         await db.SaveChangesAsync(ct);
 
         return new LibrarySyncResponse(saved.Count, matchedCount, saved.Count - matchedCount, library.Count, now);
+    }
+
+    // A saved match stores both the catalog id and the MBID. Ids are only
+    // stable within one catalog build (the sample fixture reuses small ids that
+    // mean different recordings in the real dump), so any row whose id no
+    // longer carries its MBID is matched again rather than trusted.
+    private async Task DropStaleMatchesAsync(
+        IReadOnlyList<(SpotifySavedItem Item, SpotifySavedTrack Row)> rows, CancellationToken ct)
+    {
+        var ids = rows.Where(r => r.Row.RecordingId is not null).Select(r => r.Row.RecordingId!.Value).Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return;
+        }
+
+        var current = await catalog.Recordings
+            .Where(r => ids.Contains(r.Id))
+            .Select(r => new { r.Id, r.Mbid })
+            .ToDictionaryAsync(r => r.Id, r => r.Mbid, ct);
+
+        foreach (var (_, row) in rows)
+        {
+            if (row.RecordingId is { } id && (!current.TryGetValue(id, out var mbid) || mbid != row.RecordingMbid))
+            {
+                row.RecordingId = null;
+                row.RecordingMbid = null;
+                row.Confidence = null;
+                row.MatchAttemptedAt = null;
+            }
+        }
     }
 
     // Exact artist + title matches are resolved in one query; only what is left

@@ -22,6 +22,11 @@ public class CompilerTests
 
         var broad = Engine.Compile("albums where genre = \"rock\"", context).Query!.Sql;
         Assert.Contains("EXISTS", broad);
+
+        var library = Engine.Compile(
+            "tracks from library where genre = \"acid house\"",
+            context with { CallerUserId = Guid.NewGuid() }).Query!.Sql;
+        Assert.DoesNotContain("ANY(ARRAY", library);
     }
 
     [Fact]

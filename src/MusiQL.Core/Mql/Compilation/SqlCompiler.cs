@@ -13,6 +13,7 @@ public sealed class SqlCompiler
     private readonly CompileContext _context;
     private readonly List<MqlParameter> _parameters = [];
     private int _next;
+    private bool _fromLibrary;
 
     private SqlCompiler(EntitySchema entity, CompileContext context)
     {
@@ -34,6 +35,7 @@ public sealed class SqlCompiler
         sql.Append(" FROM ").Append(_entity.FromSql);
 
         var predicates = new List<string>();
+        _fromLibrary = query.FromLibrary;
         if (query.FromLibrary)
         {
             _parameters.Add(new MqlParameter(UserParam, RequireUserId(context)));
@@ -149,7 +151,11 @@ public sealed class SqlCompiler
             $"lower(g.name) = lower({param})", negate, Selective([value.Value.ToLowerInvariant()]));
     }
 
-    private bool Selective(IEnumerable<string> lowered) => lowered.All(_context.SelectiveGenres.Contains);
+    // A library holds a few thousand tracks, so the library semi-join is the
+    // cheapest place to start and genre is best checked per row from there. The
+    // id-probe shape would instead bitmap every member of the genre first.
+    private bool Selective(IEnumerable<string> lowered) =>
+        !_fromLibrary && lowered.All(_context.SelectiveGenres.Contains);
 
     // Two shapes for the same membership test. A small genre resolves each
     // level's ids once and probes indexes with them, which is what a query with

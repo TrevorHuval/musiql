@@ -100,6 +100,59 @@ public class SpotifyLibraryServiceTests(ApiFixture fixture)
         Assert.NotNull(rows["no1"].MatchAttemptedAt);
     }
 
+    [Fact]
+    public async Task A_match_whose_id_no_longer_carries_its_mbid_is_matched_again()
+    {
+        if (!fixture.Available)
+        {
+            return;
+        }
+
+        var ownerId = await ConnectedOwnerAsync();
+        var client = new FakeSpotifyClient { Saved = [Saved("st1", "Alive", "Pearl Jam", 341000)] };
+        await BuildLibrary(client).SyncAsync(ownerId, default);
+
+        long rightId;
+        await using (var db = AppDbContextFactory.Create(fixture.ConnectionString))
+        {
+            var row = await db.SpotifySavedTracks.SingleAsync(t => t.UserId == ownerId);
+            rightId = row.RecordingId!.Value;
+            row.RecordingId = rightId + 1;
+            await db.SaveChangesAsync();
+        }
+
+        await BuildLibrary(client).SyncAsync(ownerId, default);
+
+        await using var check = AppDbContextFactory.Create(fixture.ConnectionString);
+        Assert.Equal(rightId, (await check.SpotifySavedTracks.SingleAsync(t => t.UserId == ownerId)).RecordingId);
+    }
+
+    [Fact]
+    public async Task A_near_title_needs_an_agreeing_duration()
+    {
+        if (!fixture.Available)
+        {
+            return;
+        }
+
+        var ownerId = await ConnectedOwnerAsync();
+        var client = new FakeSpotifyClient
+        {
+            Saved =
+            [
+                Saved("nd1", "Smells Like Teen Spirt", "Nirvana", 301000),
+                Saved("nd2", "Smells Like Teen Spirt", "Nirvana", 120000)
+            ]
+        };
+
+        await BuildLibrary(client).SyncAsync(ownerId, default);
+
+        await using var db = AppDbContextFactory.Create(fixture.ConnectionString);
+        var rows = await db.SpotifySavedTracks.Where(t => t.UserId == ownerId).ToDictionaryAsync(t => t.SpotifyTrackId);
+        Assert.NotNull(rows["nd1"].RecordingId);
+        Assert.Null(rows["nd2"].RecordingId);
+    }
+
     private static SpotifySavedItem Saved(string id, string title, string artist, int durationMs) =>
         new(id, title, artist, durationMs, null, DateTime.UtcNow);
 

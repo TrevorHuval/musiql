@@ -51,13 +51,15 @@ public static class CatalogEndpoints
             return Results.Ok(Array.Empty<Suggestion>());
         }
 
-        var results = await db.Artists
-            .Where(a => EF.Functions.Like(a.Name.ToLower(), Prefix(q)))
-            .OrderBy(a => a.Name)
-            .ThenBy(a => a.Id)
-            .Skip(Skip(offset))
-            .Take(Clamp(limit))
-            .Select(a => new Suggestion(a.Mbid, a.Name))
+        // MusicBrainz has several artists called "Nirvana". An MQL artist filter
+        // matches by name, so the picker offers each name once.
+        var prefix = Prefix(q);
+        var results = await db.Database.SqlQuery<Suggestion>($@"
+            SELECT DISTINCT ON (lower(a.name)) a.mbid AS ""Mbid"", a.name AS ""Name""
+            FROM catalog.artist a
+            WHERE lower(a.name) LIKE {prefix}
+            ORDER BY lower(a.name), a.name, a.id
+            OFFSET {Skip(offset)} LIMIT {Clamp(limit)}")
             .ToListAsync(ct);
 
         return Results.Ok(results);
