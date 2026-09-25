@@ -16,8 +16,10 @@ public sealed class EntitySchema
         IReadOnlyList<FieldSchema> fields,
         IReadOnlyDictionary<string, string> aliases,
         IReadOnlyList<GenreLink> genreLinks,
-        string librarySemiJoinSql)
+        string librarySemiJoinSql,
+        string? defaultOrderField = null)
     {
+        DefaultOrderField = defaultOrderField;
         Name = name;
         FromSql = fromSql;
         ProjectionSql = projectionSql;
@@ -46,6 +48,9 @@ public sealed class EntitySchema
     public IReadOnlyList<ResultColumn> ResultColumns { get; }
 
     public IReadOnlyList<GenreLink> GenreLinks { get; }
+
+    // Field ranked descending when a query gives no order of its own.
+    public string? DefaultOrderField { get; }
 
     public string LibrarySemiJoinSql { get; }
 

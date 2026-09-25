@@ -16,6 +16,9 @@ switch (command)
     case "migrate":
         Migrate(options);
         return 0;
+    case "popularity":
+        await Popularity(options);
+        return 0;
     default:
         Console.WriteLine(
             """
@@ -30,6 +33,10 @@ switch (command)
                   into the catalog schema. --sample loads the checked-in dev fixture.
                   --min-genre-votes keeps only artists with at least n genre votes (on the
                   artist or its albums), for hosts that cannot hold the full catalog.
+
+              popularity [--only artist,release_group,recording] [--restart] [--connection <cs>]
+                  Fetch ListenBrainz listener counts into catalog.*_popularity. Resumable:
+                  a rerun continues after the last stored id unless --restart is given.
 
               migrate [--connection <cs>]
                   Apply catalog schema migrations only, leaving loaded data in place.
@@ -46,6 +53,16 @@ async Task Download(CliOptions o)
     var baseUrl = o.Value("base-url") ?? DumpDownloader.DefaultBaseUrl;
     var downloader = new DumpDownloader(baseUrl, outDir, EtlLog.Write);
     await downloader.DownloadAsync();
+}
+
+async Task Popularity(CliOptions o)
+{
+    var connection = EtlDefaults.ConnectionString(o.Value("connection"));
+    var only = o.Value("only")?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    using var cancel = new CancellationTokenSource();
+    Console.CancelKeyPress += (_, e) => { e.Cancel = true; cancel.Cancel(); };
+    var fetcher = new MusiQL.Etl.Popularity.PopularityFetcher(connection, EtlLog.Write);
+    await fetcher.FetchAsync(only, o.Has("restart"), o.Value("base-url") ?? MusiQL.Etl.Popularity.PopularityFetcher.DefaultBaseUrl, cancel.Token);
 }
 
 void Migrate(CliOptions o)

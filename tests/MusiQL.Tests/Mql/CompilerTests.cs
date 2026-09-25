@@ -35,7 +35,7 @@ public class CompilerTests
         var snapshot = Compile("tracks where year >= 1990 limit 10");
         Assert.Equal(
             """
-            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id WHERE r.first_release_year >= @p0 LIMIT @row_limit
+            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms, coalesce(rp.listeners, 0) AS popularity FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id LEFT JOIN catalog.recording_popularity rp ON rp.recording_id = r.id WHERE r.first_release_year >= @p0 ORDER BY rp.listeners DESC NULLS LAST LIMIT @row_limit
             --
             @p0 = bigint 1990
             @row_limit = int 10
@@ -49,7 +49,7 @@ public class CompilerTests
         var snapshot = Compile("artists where artist = \"Nirvana\"");
         Assert.Equal(
             """
-            SELECT a.mbid AS id, a.name AS name, a.begin_year AS year FROM catalog.artist a WHERE lower(a.name) = lower(@p0) LIMIT @row_limit
+            SELECT a.mbid AS id, a.name AS name, a.begin_year AS year, coalesce(ap.listeners, 0) AS popularity FROM catalog.artist a LEFT JOIN catalog.artist_popularity ap ON ap.artist_id = a.id WHERE lower(a.name) = lower(@p0) ORDER BY ap.listeners DESC NULLS LAST LIMIT @row_limit
             --
             @p0 = text "Nirvana"
             @row_limit = int 100
@@ -63,7 +63,7 @@ public class CompilerTests
         var snapshot = Compile("tracks where artist contains \"50%_off\"");
         Assert.Equal(
             """
-            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id WHERE a.name ILIKE @p0 ESCAPE '\' LIMIT @row_limit
+            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms, coalesce(rp.listeners, 0) AS popularity FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id LEFT JOIN catalog.recording_popularity rp ON rp.recording_id = r.id WHERE a.name ILIKE @p0 ESCAPE '\' ORDER BY rp.listeners DESC NULLS LAST LIMIT @row_limit
             --
             @p0 = text "%50\%\_off%"
             @row_limit = int 100
@@ -77,7 +77,7 @@ public class CompilerTests
         var snapshot = Compile("albums where genre in (\"Grunge\", \"Punk\")");
         Assert.Equal(
             """
-            SELECT rg.mbid AS id, rg.name AS title, a.name AS artist, rg.primary_type AS type, rg.first_release_year AS year FROM catalog.release_group rg JOIN catalog.artist a ON a.id = rg.artist_id WHERE (EXISTS (SELECT 1 FROM catalog.release_group_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.release_group_id = rg.id AND lower(g.name) = ANY(@p0)) OR EXISTS (SELECT 1 FROM catalog.artist_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.artist_id = rg.artist_id AND lower(g.name) = ANY(@p0))) LIMIT @row_limit
+            SELECT rg.mbid AS id, rg.name AS title, a.name AS artist, rg.primary_type AS type, rg.first_release_year AS year, coalesce(rgp.listeners, 0) AS popularity FROM catalog.release_group rg JOIN catalog.artist a ON a.id = rg.artist_id LEFT JOIN catalog.release_group_popularity rgp ON rgp.release_group_id = rg.id WHERE (EXISTS (SELECT 1 FROM catalog.release_group_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.release_group_id = rg.id AND lower(g.name) = ANY(@p0)) OR EXISTS (SELECT 1 FROM catalog.artist_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.artist_id = rg.artist_id AND lower(g.name) = ANY(@p0))) ORDER BY rgp.listeners DESC NULLS LAST LIMIT @row_limit
             --
             @p0 = text[] ["grunge", "punk"]
             @row_limit = int 100
@@ -91,7 +91,7 @@ public class CompilerTests
         var snapshot = Compile("tracks where genre != \"pop\"");
         Assert.Equal(
             """
-            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id WHERE (NOT (EXISTS (SELECT 1 FROM catalog.recording_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.recording_id = r.id AND lower(g.name) = lower(@p0)) OR EXISTS (SELECT 1 FROM catalog.release_group_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.release_group_id = r.release_group_id AND lower(g.name) = lower(@p0)) OR EXISTS (SELECT 1 FROM catalog.artist_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.artist_id = r.artist_id AND lower(g.name) = lower(@p0)))) LIMIT @row_limit
+            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms, coalesce(rp.listeners, 0) AS popularity FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id LEFT JOIN catalog.recording_popularity rp ON rp.recording_id = r.id WHERE (NOT (EXISTS (SELECT 1 FROM catalog.recording_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.recording_id = r.id AND lower(g.name) = lower(@p0)) OR EXISTS (SELECT 1 FROM catalog.release_group_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.release_group_id = r.release_group_id AND lower(g.name) = lower(@p0)) OR EXISTS (SELECT 1 FROM catalog.artist_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.artist_id = r.artist_id AND lower(g.name) = lower(@p0)))) ORDER BY rp.listeners DESC NULLS LAST LIMIT @row_limit
             --
             @p0 = text "pop"
             @row_limit = int 100
@@ -106,7 +106,7 @@ public class CompilerTests
         var snapshot = Compile("tracks from library order by year desc", user);
         Assert.Equal(
             """
-            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id WHERE EXISTS (SELECT 1 FROM app.user_library ul WHERE ul.recording_id = r.id AND ul.user_id = @caller_user_id) ORDER BY r.first_release_year DESC LIMIT @row_limit
+            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms, coalesce(rp.listeners, 0) AS popularity FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id LEFT JOIN catalog.recording_popularity rp ON rp.recording_id = r.id WHERE EXISTS (SELECT 1 FROM app.user_library ul WHERE ul.recording_id = r.id AND ul.user_id = @caller_user_id) ORDER BY r.first_release_year DESC LIMIT @row_limit
             --
             @caller_user_id = uuid 11111111-1111-1111-1111-111111111111
             @row_limit = int 100
@@ -121,7 +121,7 @@ public class CompilerTests
             "tracks where genre = \"grunge\" and year between 1990 and 2004 and artist != \"Nirvana\"");
         Assert.Equal(
             """
-            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id WHERE (((EXISTS (SELECT 1 FROM catalog.recording_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.recording_id = r.id AND lower(g.name) = lower(@p0)) OR EXISTS (SELECT 1 FROM catalog.release_group_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.release_group_id = r.release_group_id AND lower(g.name) = lower(@p0)) OR EXISTS (SELECT 1 FROM catalog.artist_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.artist_id = r.artist_id AND lower(g.name) = lower(@p0))) AND r.first_release_year BETWEEN @p1 AND @p2) AND lower(a.name) <> lower(@p3)) LIMIT @row_limit
+            SELECT r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, r.first_release_year AS year, r.length_ms AS length_ms, coalesce(rp.listeners, 0) AS popularity FROM catalog.recording r JOIN catalog.artist a ON a.id = r.artist_id LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id LEFT JOIN catalog.recording_popularity rp ON rp.recording_id = r.id WHERE (((EXISTS (SELECT 1 FROM catalog.recording_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.recording_id = r.id AND lower(g.name) = lower(@p0)) OR EXISTS (SELECT 1 FROM catalog.release_group_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.release_group_id = r.release_group_id AND lower(g.name) = lower(@p0)) OR EXISTS (SELECT 1 FROM catalog.artist_genre lg JOIN catalog.genre g ON g.id = lg.genre_id WHERE lg.artist_id = r.artist_id AND lower(g.name) = lower(@p0))) AND r.first_release_year BETWEEN @p1 AND @p2) AND lower(a.name) <> lower(@p3)) ORDER BY rp.listeners DESC NULLS LAST LIMIT @row_limit
             --
             @p0 = text "grunge"
             @p1 = bigint 1990

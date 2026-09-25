@@ -51,6 +51,42 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
     }
 
     [Fact]
+    public async Task Unordered_queries_rank_by_popularity_with_unknowns_last()
+    {
+        if (Unavailable())
+        {
+            return;
+        }
+
+        await using var connection = new Npgsql.NpgsqlConnection(fixture.ConnectionString);
+        await connection.OpenAsync();
+        await using (var seed = new Npgsql.NpgsqlCommand("""
+            DELETE FROM catalog.recording_popularity;
+            INSERT INTO catalog.recording_popularity (recording_id, listeners, listens)
+            SELECT r.id, CASE r.name WHEN 'Alive' THEN 900 ELSE 50 END, 0
+            FROM catalog.recording r WHERE r.name IN ('Alive', 'Would?');
+            """, connection))
+        {
+            await seed.ExecuteNonQueryAsync();
+        }
+
+        try
+        {
+            var result = await fixture.RunAsync("tracks where genre = \"grunge\" limit 500");
+            var popularity = result.Rows.Select(r => (int)r[6]!).ToList();
+
+            Assert.Equal("Alive", (string)result.Rows[0][1]!);
+            Assert.Equal(900, popularity[0]);
+            Assert.Equal(popularity.OrderByDescending(p => p), popularity);
+        }
+        finally
+        {
+            await using var clear = new Npgsql.NpgsqlCommand("DELETE FROM catalog.recording_popularity", connection);
+            await clear.ExecuteNonQueryAsync();
+        }
+    }
+
+    [Fact]
     public async Task Genre_and_year_filters_stay_within_bounds()
     {
         if (Unavailable())

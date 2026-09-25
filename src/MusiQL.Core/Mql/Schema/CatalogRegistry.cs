@@ -18,10 +18,11 @@ public static class CatalogRegistry
         fromSql:
             "catalog.recording r " +
             "JOIN catalog.artist a ON a.id = r.artist_id " +
-            "LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id",
+            "LEFT JOIN catalog.release_group rg ON rg.id = r.release_group_id " +
+            "LEFT JOIN catalog.recording_popularity rp ON rp.recording_id = r.id",
         projectionSql:
             "r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, " +
-            "r.first_release_year AS year, r.length_ms AS length_ms",
+            "r.first_release_year AS year, r.length_ms AS length_ms, coalesce(rp.listeners, 0) AS popularity",
         resultColumns:
         [
             new ResultColumn("id", typeof(Guid)),
@@ -29,7 +30,8 @@ public static class CatalogRegistry
             new ResultColumn("artist", typeof(string)),
             new ResultColumn("album", typeof(string)),
             new ResultColumn("year", typeof(short?)),
-            new ResultColumn("length_ms", typeof(int?))
+            new ResultColumn("length_ms", typeof(int?)),
+            new ResultColumn("popularity", typeof(int))
         ],
         fields:
         [
@@ -41,13 +43,15 @@ public static class CatalogRegistry
             new FieldSchema("decade", FieldKind.NumberScalar, NumberOps, "((r.first_release_year / 10) * 10)"),
             new FieldSchema("length", FieldKind.NumberScalar, NumberOps, "(r.length_ms / 1000)"),
             new FieldSchema("votes", FieldKind.NumberScalar, NumberOps,
-                "(SELECT max(g.votes) FROM catalog.recording_genre g WHERE g.recording_id = r.id)")
+                "(SELECT max(g.votes) FROM catalog.recording_genre g WHERE g.recording_id = r.id)"),
+            new FieldSchema("popularity", FieldKind.NumberScalar, NumberOps, "rp.listeners", nullsLast: true)
         ],
         aliases: new Dictionary<string, string>
         {
             ["track"] = "title",
             ["name"] = "title",
-            ["rating"] = "votes"
+            ["rating"] = "votes",
+            ["listeners"] = "popularity"
         },
         genreLinks:
         [
@@ -56,23 +60,26 @@ public static class CatalogRegistry
             new GenreLink("artist_genre", "artist_id", "r.artist_id")
         ],
         librarySemiJoinSql:
-            "SELECT 1 FROM app.user_library ul WHERE ul.recording_id = r.id AND ul.user_id = @caller_user_id");
+            "SELECT 1 FROM app.user_library ul WHERE ul.recording_id = r.id AND ul.user_id = @caller_user_id",
+        defaultOrderField: "popularity");
 
     private static EntitySchema Albums() => new(
         name: "albums",
         fromSql:
             "catalog.release_group rg " +
-            "JOIN catalog.artist a ON a.id = rg.artist_id",
+            "JOIN catalog.artist a ON a.id = rg.artist_id " +
+            "LEFT JOIN catalog.release_group_popularity rgp ON rgp.release_group_id = rg.id",
         projectionSql:
             "rg.mbid AS id, rg.name AS title, a.name AS artist, rg.primary_type AS type, " +
-            "rg.first_release_year AS year",
+            "rg.first_release_year AS year, coalesce(rgp.listeners, 0) AS popularity",
         resultColumns:
         [
             new ResultColumn("id", typeof(Guid)),
             new ResultColumn("title", typeof(string)),
             new ResultColumn("artist", typeof(string)),
             new ResultColumn("type", typeof(string)),
-            new ResultColumn("year", typeof(short?))
+            new ResultColumn("year", typeof(short?)),
+            new ResultColumn("popularity", typeof(int))
         ],
         fields:
         [
@@ -83,13 +90,15 @@ public static class CatalogRegistry
             new FieldSchema("year", FieldKind.NumberScalar, NumberOps, "rg.first_release_year"),
             new FieldSchema("decade", FieldKind.NumberScalar, NumberOps, "((rg.first_release_year / 10) * 10)"),
             new FieldSchema("votes", FieldKind.NumberScalar, NumberOps,
-                "(SELECT max(g.votes) FROM catalog.release_group_genre g WHERE g.release_group_id = rg.id)")
+                "(SELECT max(g.votes) FROM catalog.release_group_genre g WHERE g.release_group_id = rg.id)"),
+            new FieldSchema("popularity", FieldKind.NumberScalar, NumberOps, "rgp.listeners", nullsLast: true)
         ],
         aliases: new Dictionary<string, string>
         {
             ["album"] = "title",
             ["name"] = "title",
-            ["rating"] = "votes"
+            ["rating"] = "votes",
+            ["listeners"] = "popularity"
         },
         genreLinks:
         [
@@ -99,17 +108,19 @@ public static class CatalogRegistry
         librarySemiJoinSql:
             "SELECT 1 FROM app.user_library ul " +
             "JOIN catalog.recording rec ON rec.id = ul.recording_id " +
-            "WHERE rec.release_group_id = rg.id AND ul.user_id = @caller_user_id");
+            "WHERE rec.release_group_id = rg.id AND ul.user_id = @caller_user_id",
+        defaultOrderField: "popularity");
 
     private static EntitySchema Artists() => new(
         name: "artists",
-        fromSql: "catalog.artist a",
-        projectionSql: "a.mbid AS id, a.name AS name, a.begin_year AS year",
+        fromSql: "catalog.artist a LEFT JOIN catalog.artist_popularity ap ON ap.artist_id = a.id",
+        projectionSql: "a.mbid AS id, a.name AS name, a.begin_year AS year, coalesce(ap.listeners, 0) AS popularity",
         resultColumns:
         [
             new ResultColumn("id", typeof(Guid)),
             new ResultColumn("name", typeof(string)),
-            new ResultColumn("year", typeof(short?))
+            new ResultColumn("year", typeof(short?)),
+            new ResultColumn("popularity", typeof(int))
         ],
         fields:
         [
@@ -118,12 +129,14 @@ public static class CatalogRegistry
             new FieldSchema("year", FieldKind.NumberScalar, NumberOps, "a.begin_year"),
             new FieldSchema("decade", FieldKind.NumberScalar, NumberOps, "((a.begin_year / 10) * 10)"),
             new FieldSchema("votes", FieldKind.NumberScalar, NumberOps,
-                "(SELECT max(g.votes) FROM catalog.artist_genre g WHERE g.artist_id = a.id)")
+                "(SELECT max(g.votes) FROM catalog.artist_genre g WHERE g.artist_id = a.id)"),
+            new FieldSchema("popularity", FieldKind.NumberScalar, NumberOps, "ap.listeners", nullsLast: true)
         ],
         aliases: new Dictionary<string, string>
         {
             ["artist"] = "name",
-            ["rating"] = "votes"
+            ["rating"] = "votes",
+            ["listeners"] = "popularity"
         },
         genreLinks:
         [
@@ -132,5 +145,6 @@ public static class CatalogRegistry
         librarySemiJoinSql:
             "SELECT 1 FROM app.user_library ul " +
             "JOIN catalog.recording rec ON rec.id = ul.recording_id " +
-            "WHERE rec.artist_id = a.id AND ul.user_id = @caller_user_id");
+            "WHERE rec.artist_id = a.id AND ul.user_id = @caller_user_id",
+        defaultOrderField: "popularity");
 }

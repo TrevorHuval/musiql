@@ -54,12 +54,12 @@ public sealed class SqlCompiler
 
         if (query.OrderBy.Count > 0)
         {
-            var keys = query.OrderBy.Select(key =>
-            {
-                var expr = _entity.Field(key.Field.Name)!.SqlExpression;
-                return $"{expr}{(key.Descending ? " DESC" : " ASC")}";
-            });
+            var keys = query.OrderBy.Select(key => OrderKey(_entity.Field(key.Field.Name)!, key.Descending));
             sql.Append(" ORDER BY ").Append(string.Join(", ", keys));
+        }
+        else if (_entity.DefaultOrderField is { } fallback)
+        {
+            sql.Append(" ORDER BY ").Append(OrderKey(_entity.Field(fallback)!, descending: true));
         }
 
         var limit = EffectiveLimit(query, context);
@@ -154,6 +154,11 @@ public sealed class SqlCompiler
     // A library holds a few thousand tracks, so the library semi-join is the
     // cheapest place to start and genre is best checked per row from there. The
     // id-probe shape would instead bitmap every member of the genre first.
+    private static string OrderKey(FieldSchema field, bool descending) =>
+        descending
+            ? $"{field.SqlExpression} DESC{(field.NullsLast ? " NULLS LAST" : "")}"
+            : $"{field.SqlExpression} ASC";
+
     private bool Selective(IEnumerable<string> lowered) =>
         !_fromLibrary && lowered.All(_context.SelectiveGenres.Contains);
 
