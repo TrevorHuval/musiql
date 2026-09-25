@@ -31,3 +31,14 @@ public sealed record LibrarySyncResponse(
     int UnmatchedCount,
     int LibraryCount,
     DateTime SyncedAt);
+
+public sealed record PlaylistSpotifyLinkResponse(
+    bool Exported,
+    string? SpotifyUrl,
+    int TrackCount,
+    DateTime? LastExportedAt,
+    bool KeepLive,
+    DateTime? NextRefreshAt,
+    string? LastRefreshError);
+
+public sealed record KeepLiveRequest(bool Enabled);

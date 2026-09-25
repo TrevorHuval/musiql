@@ -1,0 +1,60 @@
+.track {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: 36px;
+  height: 20px;
+  padding: 2px;
+  background: var(--inset);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--ease-out),
+    border-color 160ms var(--ease-out);
+}
+
+/* Extend the hit area to 40px tall without growing the visible track. */
+.track::before {
+  content: '';
+  position: absolute;
+  inset: -10px -4px;
+}
+
+.track[data-checked] {
+  background: var(--signal-bg);
+  border-color: var(--signal-line);
+}
+
+.track[data-focus] {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--signal-bg);
+}
+
+.track[data-disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--paper-3);
+  border-radius: var(--r-pill);
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 160ms var(--ease-out);
+}
+
+.track[data-checked] .thumb {
+  background: var(--signal);
+  transform: translateX(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track,
+  .thumb {
+    transition: none;
+  }
+}

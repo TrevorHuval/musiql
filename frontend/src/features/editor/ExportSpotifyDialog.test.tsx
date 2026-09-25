@@ -1,16 +1,35 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import type { ExportResult, SpotifyStatus } from '../../api/types'
+import type { ExportResult, PlaylistSpotifyLink, SpotifyStatus } from '../../api/types'
 import { ExportSpotifyDialog } from './ExportSpotifyDialog'
 
 const useSpotifyStatus = vi.fn()
 const useExportPlaylist = vi.fn()
+const useSpotifyLink = vi.fn()
+const setKeepLive = vi.fn()
 
 vi.mock('../../api/queries', () => ({
   useSpotifyStatus: () => useSpotifyStatus(),
   useExportPlaylist: () => useExportPlaylist(),
+  useSpotifyLink: () => useSpotifyLink(),
+  useSetKeepLive: () => ({ mutate: setKeepLive, isPending: false }),
 }))
+
+function link(overrides: Partial<PlaylistSpotifyLink> = {}): { data: PlaylistSpotifyLink } {
+  return {
+    data: {
+      exported: true,
+      spotifyUrl: 'https://open.spotify.com/playlist/pl1',
+      trackCount: 18,
+      lastExportedAt: new Date(Date.now() - 3 * 3_600_000).toISOString(),
+      keepLive: false,
+      nextRefreshAt: null,
+      lastRefreshError: null,
+      ...overrides,
+    },
+  }
+}
 
 function renderDialog() {
   return render(
@@ -38,6 +57,7 @@ function status(connected: boolean): { data: SpotifyStatus; isPending: false; is
 
 describe('ExportSpotifyDialog', () => {
   it('prompts to connect when Spotify is not linked', () => {
+    useSpotifyLink.mockReturnValue({ data: undefined })
     useSpotifyStatus.mockReturnValue(status(false))
     useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false })
 
@@ -58,6 +78,7 @@ describe('ExportSpotifyDialog', () => {
       unmatched: [{ title: 'Obscure B-Side', artist: 'Mudhoney', year: 1992, confidence: 0.41 }],
       exportedAt: new Date().toISOString(),
     }
+    useSpotifyLink.mockReturnValue(link())
     useSpotifyStatus.mockReturnValue(status(true))
     useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false, data: result })
 
@@ -70,5 +91,47 @@ describe('ExportSpotifyDialog', () => {
       'href',
       'https://open.spotify.com/playlist/pl1',
     )
+  })
+
+  it('offers keep live once exported and shows when it refreshes next', () => {
+    useSpotifyStatus.mockReturnValue(status(true))
+    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false })
+    useSpotifyLink.mockReturnValue(link())
+
+    const { rerender } = renderDialog()
+    expect(screen.getByText(/Last pushed 3h ago with 18 tracks/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Keep live on Spotify' }))
+    expect(setKeepLive).toHaveBeenCalledWith(true)
+
+    useSpotifyLink.mockReturnValue(
+      link({ keepLive: true, nextRefreshAt: new Date(Date.now() + 21 * 3_600_000).toISOString() }),
+    )
+    rerender(
+      <MemoryRouter>
+        <ExportSpotifyDialog playlistId="p1" playlistName="Grunge" open onClose={() => {}} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('Refreshes daily · next in 21h')).toBeInTheDocument()
+  })
+
+  it('surfaces the last refresh failure in place of the schedule', () => {
+    useSpotifyStatus.mockReturnValue(status(true))
+    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false })
+    useSpotifyLink.mockReturnValue(
+      link({ keepLive: true, lastRefreshError: 'Spotify is no longer connected. Reconnect it in settings.' }),
+    )
+
+    renderDialog()
+    expect(screen.getByText(/no longer connected/)).toBeInTheDocument()
+  })
+
+  it('does not offer keep live before the first export', () => {
+    useSpotifyStatus.mockReturnValue(status(true))
+    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false })
+    useSpotifyLink.mockReturnValue(link({ exported: false, lastExportedAt: null }))
+
+    renderDialog()
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
   })
 })

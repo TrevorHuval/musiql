@@ -91,6 +91,9 @@ builder.Services.AddScoped<QueryService>();
 builder.Services.AddScoped<PlaylistSnapshotService>();
 
 builder.Services.AddSpotifyIntegration(builder.Configuration);
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<LivePlaylistRefresher>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<LivePlaylistRefresher>());
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<BusyExceptionHandler>();

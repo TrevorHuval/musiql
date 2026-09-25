@@ -5,6 +5,7 @@ import type {
   LibrarySyncResult,
   Playlist,
   PlaylistInput,
+  PlaylistSpotifyLink,
   QueryPage,
   SchemaResponse,
   SpotifyConnectResponse,
@@ -34,6 +35,12 @@ export const playlists = {
     apiRequest<QueryPage>(`/api/playlists/${id}/tracks?page=${page}&pageSize=${pageSize}`),
   exportSpotify: (id: string, rematch = false) =>
     apiRequest<ExportResult>(`/api/playlists/${id}/export/spotify?rematch=${rematch}`, { method: 'POST' }),
+  spotifyLink: (id: string) => apiRequest<PlaylistSpotifyLink>(`/api/playlists/${id}/spotify`),
+  setKeepLive: (id: string, enabled: boolean) =>
+    apiRequest<PlaylistSpotifyLink>(`/api/playlists/${id}/spotify/keep-live`, {
+      method: 'PUT',
+      body: { enabled },
+    }),
   exportM3u: (id: string, fallbackName: string): Promise<DownloadedFile> =>
     apiDownload(`/api/playlists/${id}/export/m3u`, fallbackName),
 }

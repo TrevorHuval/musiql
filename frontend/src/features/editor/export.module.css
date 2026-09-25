@@ -172,3 +172,50 @@
 .actions .openLink {
   margin-right: auto;
 }
+
+.inlineLink {
+  color: var(--signal-hi);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.inlineLink:hover {
+  text-decoration: underline;
+}
+
+/* Keep-live row: an inset strip like the MQL readout. The amber edge appears
+   only while it is on, echoing the live pill. */
+.keepLive {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  transition: border-color 160ms var(--ease-out);
+}
+
+.keepLive[data-on] {
+  border-color: var(--signal-line);
+}
+
+.keepLiveText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.keepLiveTitle {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--paper);
+}
+
+.keepLiveMeta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--paper-3);
+}

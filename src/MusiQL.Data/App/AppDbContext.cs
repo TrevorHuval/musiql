@@ -95,7 +95,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasKey(l => l.PlaylistId);
             e.Property(l => l.PlaylistId).ValueGeneratedNever();
             e.Property(l => l.SpotifyPlaylistId).HasMaxLength(128).IsRequired();
+            e.Property(l => l.LastRefreshError).HasMaxLength(500);
             e.HasIndex(l => l.UserId);
+            e.HasIndex(l => l.KeepLive).HasFilter("keep_live");
             e.HasOne<Playlist>().WithMany().HasForeignKey(l => l.PlaylistId).OnDelete(DeleteBehavior.Cascade);
         });
 

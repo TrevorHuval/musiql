@@ -57,6 +57,7 @@ public sealed class SpotifyExportService(
 
         target.Link.TrackCount = uris.Count;
         target.Link.LastExportedAt = DateTime.UtcNow;
+        target.Link.LastRefreshError = null;
         await db.SaveChangesAsync(ct);
 
         return new ExportResponse(

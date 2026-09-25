@@ -24,3 +24,12 @@ export function formatRelative(iso: string): string {
   if (diff < 7 * day) return `${Math.floor(diff / day)}d ago`
   return formatDate(iso)
 }
+
+export function formatUntil(iso: string): string {
+  const diff = new Date(iso).getTime() - Date.now()
+  const hour = 3_600_000
+  if (diff <= 0) return 'within the hour'
+  if (diff < hour) return `in ${Math.max(1, Math.round(diff / 60_000))}m`
+  if (diff < 48 * hour) return `in ${Math.round(diff / hour)}h`
+  return `in ${Math.round(diff / (24 * hour))}d`
+}

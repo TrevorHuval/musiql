@@ -96,6 +96,16 @@ export interface UnmatchedTrack {
   confidence: number
 }
 
+export interface PlaylistSpotifyLink {
+  exported: boolean
+  spotifyUrl: string | null
+  trackCount: number
+  lastExportedAt: string | null
+  keepLive: boolean
+  nextRefreshAt: string | null
+  lastRefreshError: string | null
+}
+
 export interface ExportResult {
   playlistName: string
   spotifyPlaylistId: string

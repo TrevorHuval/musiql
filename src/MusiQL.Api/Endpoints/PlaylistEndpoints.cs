@@ -23,6 +23,8 @@ public static class PlaylistEndpoints
         group.MapGet("/{id:guid}/tracks", Tracks).RequireRateLimiting(RateLimits.Query);
         group.MapGet("/{id:guid}/export/m3u", ExportM3u).RequireRateLimiting(RateLimits.Query);
         group.MapPost("/{id:guid}/export/spotify", ExportToSpotify).RequireRateLimiting(RateLimits.Query);
+        group.MapGet("/{id:guid}/spotify", SpotifyLink);
+        group.MapPut("/{id:guid}/spotify/keep-live", SetKeepLive).RequireRateLimiting(RateLimits.Write);
         return group;
     }
 
@@ -204,6 +206,58 @@ public static class PlaylistEndpoints
             return ApiProblems.Spotify(ex);
         }
     }
+
+    private static async Task<IResult> SpotifyLink(
+        Guid id, ClaimsPrincipal principal, AppDbContext db, CancellationToken ct)
+    {
+        var playlist = await Owned(db, principal, id, ct);
+        if (playlist is null)
+        {
+            return ApiProblems.NotFound("Playlist");
+        }
+
+        var link = await db.SpotifyPlaylistLinks.AsNoTracking().FirstOrDefaultAsync(l => l.PlaylistId == id, ct);
+        return Results.Ok(ToLinkResponse(link));
+    }
+
+    private static async Task<IResult> SetKeepLive(
+        Guid id, KeepLiveRequest request, ClaimsPrincipal principal, AppDbContext db, CancellationToken ct)
+    {
+        var playlist = await Owned(db, principal, id, ct);
+        if (playlist is null)
+        {
+            return ApiProblems.NotFound("Playlist");
+        }
+
+        var link = await db.SpotifyPlaylistLinks.FirstOrDefaultAsync(l => l.PlaylistId == id, ct);
+        if (link is null)
+        {
+            return Results.Problem(
+                title: "Export first",
+                detail: "Export this playlist to Spotify once before keeping it live.",
+                statusCode: StatusCodes.Status409Conflict);
+        }
+
+        link.KeepLive = request.Enabled;
+        if (request.Enabled)
+        {
+            link.LastRefreshError = null;
+        }
+
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(ToLinkResponse(link));
+    }
+
+    private static PlaylistSpotifyLinkResponse ToLinkResponse(SpotifyPlaylistLink? link) => link is null
+        ? new PlaylistSpotifyLinkResponse(false, null, 0, null, false, null, null)
+        : new PlaylistSpotifyLinkResponse(
+            true,
+            $"https://open.spotify.com/playlist/{link.SpotifyPlaylistId}",
+            link.TrackCount,
+            link.LastExportedAt,
+            link.KeepLive,
+            link.KeepLive ? link.LastExportedAt + LivePlaylistRefresher.RefreshEvery : null,
+            link.LastRefreshError);
 
     // Column limits from AppDbContext, checked here so an oversized save is a
     // 400 with a reason instead of a database error.

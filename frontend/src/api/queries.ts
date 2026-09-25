@@ -12,6 +12,7 @@ export const keys = {
     ['playlists', id, 'tracks', page, pageSize] as const,
   preview: (input: PreviewInput) => ['preview', input] as const,
   spotifyStatus: ['spotify', 'status'] as const,
+  spotifyLink: (id: string) => ['playlists', id, 'spotify'] as const,
 }
 
 export function useSchema() {
@@ -85,7 +86,23 @@ export function useSyncLibrary() {
 }
 
 export function useExportPlaylist(id: string) {
-  return useMutation({ mutationFn: (rematch: boolean) => playlists.exportSpotify(id, rematch) })
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (rematch: boolean) => playlists.exportSpotify(id, rematch),
+    onSuccess: () => client.invalidateQueries({ queryKey: keys.spotifyLink(id) }),
+  })
+}
+
+export function useSpotifyLink(id: string) {
+  return useQuery({ queryKey: keys.spotifyLink(id), queryFn: () => playlists.spotifyLink(id) })
+}
+
+export function useSetKeepLive(id: string) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (enabled: boolean) => playlists.setKeepLive(id, enabled),
+    onSuccess: (link) => client.setQueryData(keys.spotifyLink(id), link),
+  })
 }
 
 export function useExportM3u(id: string, name: string) {
