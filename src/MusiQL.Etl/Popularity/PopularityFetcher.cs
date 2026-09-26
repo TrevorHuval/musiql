@@ -176,12 +176,22 @@ public sealed class PopularityFetcher(string connectionString, Action<string> lo
         await using var transaction = await connection.BeginTransactionAsync(ct);
         if (found.Count > 0)
         {
-            await using var command = new NpgsqlCommand($"""
-                INSERT INTO {target.PopularityTable} ({target.KeyColumn}, listeners, listens)
-                SELECT * FROM unnest(@ids, @listeners, @listens)
-                ON CONFLICT ({target.KeyColumn}) DO UPDATE
-                    SET listeners = excluded.listeners, listens = excluded.listens
-                """, connection, transaction);
+            // Recordings keep the raw count in listeners and rank by score, which
+            // starts equal to it and is overridden by the Deezer blend (blend.sql).
+            var sql = target.Entity == "recording"
+                ? $"""
+                    INSERT INTO {target.PopularityTable} ({target.KeyColumn}, score, listeners, listens)
+                    SELECT id, n, n, l FROM unnest(@ids, @listeners, @listens) AS u(id, n, l)
+                    ON CONFLICT ({target.KeyColumn}) DO UPDATE
+                        SET listeners = excluded.listeners, listens = excluded.listens
+                    """
+                : $"""
+                    INSERT INTO {target.PopularityTable} ({target.KeyColumn}, listeners, listens)
+                    SELECT * FROM unnest(@ids, @listeners, @listens)
+                    ON CONFLICT ({target.KeyColumn}) DO UPDATE
+                        SET listeners = excluded.listeners, listens = excluded.listens
+                    """;
+            await using var command = new NpgsqlCommand(sql, connection, transaction);
             command.Parameters.Add(new NpgsqlParameter("ids", NpgsqlDbType.Array | NpgsqlDbType.Bigint)
                 { Value = found.Select(f => f.Id).ToArray() });
             command.Parameters.Add(new NpgsqlParameter("listeners", NpgsqlDbType.Array | NpgsqlDbType.Integer)

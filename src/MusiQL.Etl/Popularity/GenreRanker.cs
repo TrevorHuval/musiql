@@ -3,7 +3,8 @@ using Npgsql;
 
 namespace MusiQL.Etl.Popularity;
 
-// Rebuilds catalog.genre_top_recording from the popularity and genre tables.
+// Recomputes the blended popularity score (blend.sql), then rebuilds
+// catalog.genre_top_recording from the popularity and genre tables.
 // Run after fetching popularity, after a catalog load, or after genre rules
 // change; it replaces the table's contents in one transaction.
 public sealed class GenreRanker(string connectionString, Action<string> log)
@@ -13,6 +14,14 @@ public sealed class GenreRanker(string connectionString, Action<string> log)
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync(ct);
 
+        log("blending ListenBrainz and Deezer popularity into one score");
+        await using (var transaction = await connection.BeginTransactionAsync(ct))
+        {
+            await using var blend = new NpgsqlCommand(Script("blend.sql"), connection, transaction) { CommandTimeout = 0 };
+            await blend.ExecuteNonQueryAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+
         log("ranking each genre's most popular tracks");
         await using (var transaction = await connection.BeginTransactionAsync(ct))
         {
@@ -21,7 +30,8 @@ public sealed class GenreRanker(string connectionString, Action<string> log)
             await transaction.CommitAsync(ct);
         }
 
-        await using (var analyze = new NpgsqlCommand("VACUUM (ANALYZE) catalog.genre_top_recording", connection) { CommandTimeout = 0 })
+        await using (var analyze = new NpgsqlCommand(
+            "VACUUM (ANALYZE) catalog.genre_top_recording, catalog.recording_popularity", connection) { CommandTimeout = 0 })
         {
             await analyze.ExecuteNonQueryAsync(ct);
         }

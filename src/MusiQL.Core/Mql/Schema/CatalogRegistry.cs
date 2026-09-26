@@ -22,7 +22,7 @@ public static class CatalogRegistry
             "LEFT JOIN catalog.recording_popularity rp ON rp.recording_id = r.id",
         projectionSql:
             "r.mbid AS id, r.name AS title, a.name AS artist, rg.name AS album, " +
-            "r.first_release_year AS year, r.length_ms AS length_ms, coalesce(rp.listeners, 0) AS popularity",
+            "r.first_release_year AS year, r.length_ms AS length_ms, coalesce(rp.score, 0) AS popularity",
         resultColumns:
         [
             new ResultColumn("id", typeof(Guid)),
@@ -44,7 +44,7 @@ public static class CatalogRegistry
             new FieldSchema("length", FieldKind.NumberScalar, NumberOps, "(r.length_ms / 1000)"),
             new FieldSchema("votes", FieldKind.NumberScalar, NumberOps,
                 "(SELECT max(g.votes) FROM catalog.recording_genre g WHERE g.recording_id = r.id)"),
-            new FieldSchema("popularity", FieldKind.NumberScalar, NumberOps, "rp.listeners", nullsLast: true)
+            new FieldSchema("popularity", FieldKind.NumberScalar, NumberOps, "rp.score", nullsLast: true)
         ],
         aliases: new Dictionary<string, string>
         {

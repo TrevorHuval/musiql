@@ -19,6 +19,17 @@ switch (command)
     case "popularity":
         await Popularity(options);
         return 0;
+    case "deezer":
+    {
+        var connection = EtlDefaults.ConnectionString(options.Value("connection"));
+        var artists = int.TryParse(options.Value("artists"), out var n) ? n : 40000;
+        using var cancel = new CancellationTokenSource();
+        Console.CancelKeyPress += (_, e) => { e.Cancel = true; cancel.Cancel(); };
+        await new MusiQL.Etl.Popularity.DeezerFetcher(connection, EtlLog.Write)
+            .FetchAsync(artists, options.Has("restart"), options.Value("base-url") ?? MusiQL.Etl.Popularity.DeezerFetcher.DefaultBaseUrl, cancel.Token);
+        await new MusiQL.Etl.Popularity.GenreRanker(connection, EtlLog.Write).RankAsync(cancel.Token);
+        return 0;
+    }
     case "rank":
         await new MusiQL.Etl.Popularity.GenreRanker(
             EtlDefaults.ConnectionString(options.Value("connection")), EtlLog.Write).RankAsync(default);
@@ -43,8 +54,13 @@ switch (command)
                   a rerun continues after the last stored id unless --restart is given.
                   Ends by rebuilding the per-genre popularity ranking.
 
+              deezer [--artists 40000] [--restart] [--connection <cs>]
+                  Fetch current Deezer rank for the top tracks of the most popular artists
+                  (ListenBrainz order) and blend it into the popularity score. Resumable.
+
               rank [--connection <cs>]
-                  Rebuild each genre's ranked top tracks (catalog.genre_top_recording).
+                  Recompute the blended popularity score and rebuild each genre's ranked
+                  top tracks (catalog.genre_top_recording).
 
               migrate [--connection <cs>]
                   Apply catalog schema migrations only, leaving loaded data in place.

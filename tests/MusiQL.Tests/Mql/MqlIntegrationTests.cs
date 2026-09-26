@@ -62,8 +62,8 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
         await connection.OpenAsync();
         await using (var seed = new Npgsql.NpgsqlCommand("""
             DELETE FROM catalog.recording_popularity;
-            INSERT INTO catalog.recording_popularity (recording_id, listeners, listens)
-            SELECT r.id, CASE r.name WHEN 'Alive' THEN 900 ELSE 50 END, 0
+            INSERT INTO catalog.recording_popularity (recording_id, score, listeners, listens)
+            SELECT r.id, CASE r.name WHEN 'Alive' THEN 900 ELSE 50 END, CASE r.name WHEN 'Alive' THEN 900 ELSE 50 END, 0
             FROM catalog.recording r WHERE r.name IN ('Alive', 'Would?');
             """, connection))
         {
@@ -105,8 +105,8 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
         const string mql = "tracks where genre = \"grunge\" and year between 1990 and 2004 limit 500";
         await Exec("""
             DELETE FROM catalog.recording_popularity;
-            INSERT INTO catalog.recording_popularity (recording_id, listeners, listens)
-            SELECT id, 1000 + (id * 37) % 5000, 0 FROM catalog.recording WHERE id % 3 <> 0;
+            INSERT INTO catalog.recording_popularity (recording_id, score, listeners, listens)
+            SELECT id, 1000 + (id * 37) % 5000, 1000 + (id * 37) % 5000, 0 FROM catalog.recording WHERE id % 3 <> 0;
             """);
 
         try
@@ -126,6 +126,52 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
         finally
         {
             await Exec("DELETE FROM catalog.recording_popularity; TRUNCATE catalog.genre_top_recording;");
+        }
+    }
+
+    [Fact]
+    public async Task Deezer_ranked_tracks_lead_and_blending_keeps_listener_counts()
+    {
+        if (Unavailable())
+        {
+            return;
+        }
+
+        await using var connection = new Npgsql.NpgsqlConnection(fixture.ConnectionString);
+        await connection.OpenAsync();
+        async Task Exec(string sql)
+        {
+            await using var command = new Npgsql.NpgsqlCommand(sql, connection);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        await Exec("""
+            DELETE FROM catalog.recording_popularity; DELETE FROM catalog.recording_deezer;
+            INSERT INTO catalog.recording_popularity (recording_id, score, listeners, listens)
+            SELECT id, 5000, 5000, 0 FROM catalog.recording WHERE name = 'Alive';
+            INSERT INTO catalog.recording_popularity (recording_id, score, listeners, listens)
+            SELECT id, 10, 10, 0 FROM catalog.recording WHERE name = 'Would?';
+            INSERT INTO catalog.recording_deezer (recording_id, deezer_rank)
+            SELECT id, 400000 FROM catalog.recording WHERE name = 'Would?';
+            """);
+
+        try
+        {
+            await new MusiQL.Etl.Popularity.GenreRanker(fixture.ConnectionString, _ => { }).RankAsync(default);
+            await new MusiQL.Etl.Popularity.GenreRanker(fixture.ConnectionString, _ => { }).RankAsync(default);
+
+            var result = await fixture.RunAsync("tracks where genre = \"grunge\" limit 500");
+            Assert.Equal("Would?", (string)result.Rows[0][1]!);
+            Assert.Equal("Alive", (string)result.Rows[1][1]!);
+
+            await using var check = new Npgsql.NpgsqlCommand(
+                "SELECT score FROM catalog.recording_popularity p JOIN catalog.recording r ON r.id = p.recording_id WHERE r.name = 'Alive'",
+                connection);
+            Assert.Equal(5000, (int)(await check.ExecuteScalarAsync())!);
+        }
+        finally
+        {
+            await Exec("DELETE FROM catalog.recording_popularity; DELETE FROM catalog.recording_deezer; TRUNCATE catalog.genre_top_recording;");
         }
     }
 
