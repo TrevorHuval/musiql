@@ -40,11 +40,11 @@ public sealed partial class DeezerFetcher(string connectionString, Action<string
         for (var offset = done; offset < artists.Count; offset += parallel * 25)
         {
             var round = artists.Skip(offset).Take(parallel * 25).ToList();
-            var results = new List<(long RecordingId, int Rank)>();
+            var results = new List<(long RecordingId, int Rank, long Fans)>();
             await Parallel.ForEachAsync(round, new ParallelOptions { MaxDegreeOfParallelism = parallel, CancellationToken = ct },
                 async (artist, token) =>
                 {
-                    var tracks = await TopTracksAsync(http, artist.Name, token);
+                    var (tracks, fans) = await TopTracksAsync(http, artist.Name, token);
                     if (tracks.Count == 0)
                     {
                         return;
@@ -55,7 +55,7 @@ public sealed partial class DeezerFetcher(string connectionString, Action<string
                     var matches = await MatchAsync(lookup, artist.Id, tracks, token);
                     lock (results)
                     {
-                        results.AddRange(matches);
+                        results.AddRange(matches.Select(m => (m.RecordingId, m.Rank, fans)));
                     }
                 });
 
@@ -74,12 +74,15 @@ public sealed partial class DeezerFetcher(string connectionString, Action<string
         log($"deezer: done, {mapped:N0} tracks ranked this run");
     }
 
-    private async Task<List<(string Title, int Rank)>> TopTracksAsync(HttpClient http, string artistName, CancellationToken ct)
+    private async Task<(List<(string Title, int Rank)> Tracks, long Fans)> TopTracksAsync(HttpClient http, string artistName, CancellationToken ct)
     {
-        var search = await GetAsync(http, $"search/artist?q={Uri.EscapeDataString($"artist:\"{artistName}\"")}&limit=10", ct);
+        // A plain name query: Deezer's artist:"..." syntax leaves out the most
+        // popular exact match (no Queen for "Queen"), so search broadly and pick
+        // the exact name with the most fans.
+        var search = await GetAsync(http, $"search/artist?q={Uri.EscapeDataString(artistName)}&limit=25", ct);
         if (search is null || !search.Value.TryGetProperty("data", out var candidates))
         {
-            return [];
+            return ([], 0);
         }
 
         var wanted = Normalize(artistName);
@@ -98,19 +101,19 @@ public sealed partial class DeezerFetcher(string connectionString, Action<string
 
         if (deezerId is null)
         {
-            return [];
+            return ([], 0);
         }
 
         var top = await GetAsync(http, $"artist/{deezerId}/top?limit={TopTracks}", ct);
         if (top is null || !top.Value.TryGetProperty("data", out var tracks))
         {
-            return [];
+            return ([], bestFans);
         }
 
-        return tracks.EnumerateArray()
+        return (tracks.EnumerateArray()
             .Select(t => (Title: TitleCore(t.GetProperty("title").GetString() ?? ""), Rank: t.TryGetProperty("rank", out var r) ? r.GetInt32() : 0))
             .Where(t => t.Title.Length > 0 && t.Rank > 0)
-            .ToList();
+            .ToList(), bestFans);
     }
 
     private async Task<JsonElement?> GetAsync(HttpClient http, string path, CancellationToken ct)
@@ -198,19 +201,22 @@ public sealed partial class DeezerFetcher(string connectionString, Action<string
     }
 
     private static async Task StoreAsync(
-        NpgsqlConnection connection, List<(long RecordingId, int Rank)> results, int progress, CancellationToken ct)
+        NpgsqlConnection connection, List<(long RecordingId, int Rank, long Fans)> results, int progress, CancellationToken ct)
     {
         await using var transaction = await connection.BeginTransactionAsync(ct);
-        var best = results.GroupBy(r => r.RecordingId).Select(g => (Id: g.Key, Rank: g.Max(r => r.Rank))).ToList();
+        var best = results.GroupBy(r => r.RecordingId)
+            .Select(g => (Id: g.Key, Rank: g.Max(r => r.Rank), Fans: g.Max(r => r.Fans))).ToList();
         if (best.Count > 0)
         {
             await using var insert = new NpgsqlCommand("""
-                INSERT INTO catalog.recording_deezer (recording_id, deezer_rank)
-                SELECT * FROM unnest(@ids, @ranks)
-                ON CONFLICT (recording_id) DO UPDATE SET deezer_rank = excluded.deezer_rank
+                INSERT INTO catalog.recording_deezer (recording_id, deezer_rank, artist_fans)
+                SELECT * FROM unnest(@ids, @ranks, @fans)
+                ON CONFLICT (recording_id) DO UPDATE
+                    SET deezer_rank = excluded.deezer_rank, artist_fans = excluded.artist_fans
                 """, connection, transaction);
             insert.Parameters.Add(new NpgsqlParameter("ids", NpgsqlDbType.Array | NpgsqlDbType.Bigint) { Value = best.Select(b => b.Id).ToArray() });
             insert.Parameters.Add(new NpgsqlParameter("ranks", NpgsqlDbType.Array | NpgsqlDbType.Integer) { Value = best.Select(b => b.Rank).ToArray() });
+            insert.Parameters.Add(new NpgsqlParameter("fans", NpgsqlDbType.Array | NpgsqlDbType.Bigint) { Value = best.Select(b => b.Fans).ToArray() });
             await insert.ExecuteNonQueryAsync(ct);
         }
 

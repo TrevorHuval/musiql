@@ -23,6 +23,7 @@ namespace MusiQL.Data.Migrations
                 CREATE TABLE IF NOT EXISTS catalog.recording_deezer (
                     recording_id bigint NOT NULL,
                     deezer_rank integer NOT NULL,
+                    artist_fans bigint NOT NULL DEFAULT 0,
                     CONSTRAINT pk_recording_deezer PRIMARY KEY (recording_id)
                 );
                 """);

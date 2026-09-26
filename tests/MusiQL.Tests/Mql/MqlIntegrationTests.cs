@@ -111,11 +111,13 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
 
         try
         {
-            await Exec("TRUNCATE catalog.genre_top_recording");
-            var plain = await fixture.RunAsync(mql);
-
+            // Ranking re-blends the scores first, so rank, query, then clear the
+            // precomputed list and query again against the same scores.
             await new MusiQL.Etl.Popularity.GenreRanker(fixture.ConnectionString, _ => { }).RankAsync(default);
             var ranked = await fixture.RunAsync(mql);
+
+            await Exec("TRUNCATE catalog.genre_top_recording");
+            var plain = await fixture.RunAsync(mql);
 
             // Same tracks in the same popularity order; tracks with equal counts
             // may come in either order.
@@ -130,7 +132,7 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
     }
 
     [Fact]
-    public async Task Deezer_ranked_tracks_lead_and_blending_keeps_listener_counts()
+    public async Task A_current_hit_outranks_a_modest_classic_and_blending_is_stable()
     {
         if (Unavailable())
         {
@@ -151,8 +153,8 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
             SELECT id, 5000, 5000, 0 FROM catalog.recording WHERE name = 'Alive';
             INSERT INTO catalog.recording_popularity (recording_id, score, listeners, listens)
             SELECT id, 10, 10, 0 FROM catalog.recording WHERE name = 'Would?';
-            INSERT INTO catalog.recording_deezer (recording_id, deezer_rank)
-            SELECT id, 400000 FROM catalog.recording WHERE name = 'Would?';
+            INSERT INTO catalog.recording_deezer (recording_id, deezer_rank, artist_fans)
+            SELECT id, 990000, 10000000 FROM catalog.recording WHERE name = 'Would?';
             """);
 
         try
@@ -167,7 +169,8 @@ public class MqlIntegrationTests(SampleDatabaseFixture fixture, ITestOutputHelpe
             await using var check = new Npgsql.NpgsqlCommand(
                 "SELECT score FROM catalog.recording_popularity p JOIN catalog.recording r ON r.id = p.recording_id WHERE r.name = 'Alive'",
                 connection);
-            Assert.Equal(5000, (int)(await check.ExecuteScalarAsync())!);
+            // sqrt(5000 / 320000) * 500000, and unchanged by a second blend.
+            Assert.Equal(62500, (int)(await check.ExecuteScalarAsync())!);
         }
         finally
         {
