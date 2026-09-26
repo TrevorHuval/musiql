@@ -182,7 +182,7 @@ public sealed partial class DeezerFetcher(string connectionString, Action<string
         await using var command = new NpgsqlCommand("""
             SELECT DISTINCT ON (t) r.id, t
             FROM catalog.recording r
-            CROSS JOIN LATERAL (SELECT lower(translate(r.name, '’‘', '''''')) AS t) k
+            CROSS JOIN LATERAL (SELECT lower(translate(r.name, '’‘‐‑–—', '''''----')) AS t) k
             LEFT JOIN catalog.recording_popularity p ON p.recording_id = r.id
             WHERE r.artist_id = @artist AND t = ANY(@titles)
             ORDER BY t, p.listeners DESC NULLS LAST, r.id
@@ -265,6 +265,13 @@ public sealed partial class DeezerFetcher(string connectionString, Action<string
         if (dash > 0)
         {
             core = core[..dash];
+        }
+
+        // MusicBrainz uses typographic apostrophes and hyphens ("Anti‐Hero");
+        // Deezer mostly does not. Fold both sides to ASCII.
+        foreach (var typographic in "‐‑–—")
+        {
+            core = core.Replace(typographic, '-');
         }
 
         return core.Replace('’', '\'').Replace('‘', '\'').Trim().ToLowerInvariant();

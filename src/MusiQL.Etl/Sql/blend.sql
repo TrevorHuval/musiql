@@ -7,7 +7,7 @@
 --
 -- Current: Deezer's rank for the track, which reflects streaming now but
 -- crowds most hits into 900k-1M and leans toward Deezer's (largely French)
--- audience. Raised to the fourth power to spread that crowd, then weighted by
+-- audience. Squared to spread that crowd a little (a 2018 hit still ranks), then weighted by
 -- the artist's Deezer fan count on a log scale, so a regional streaming spike
 -- counts for less than a global act's catalogue.
 --
@@ -24,9 +24,11 @@ SET score = s.score
 FROM (
     SELECT p2.recording_id,
            round(500000 * (
-               coalesce(power(d.deezer_rank / 1000000.0, 4)
+               coalesce(power(d.deezer_rank / 1000000.0, 2)
                         * power(least(log(greatest(d.artist_fans, 1)) / 7.4, 1.0), 2), 0)
-             + coalesce(sqrt(least(p2.listeners, 320000) / 320000.0), 0)
+             -- LEAST ignores NULLs, so a missing count must become 0 first or it
+             -- reads as the maximum.
+             + sqrt(least(coalesce(p2.listeners, 0), 320000) / 320000.0)
            ))::int AS score
     FROM catalog.recording_popularity p2
     LEFT JOIN catalog.recording_deezer d ON d.recording_id = p2.recording_id
