@@ -246,7 +246,9 @@ public sealed class SqlCompiler
     {
         var param = AddParam(value.Value);
         return GenreMembership(
-            $"lower(g.name) = lower({param})", negate, Selective([value.Value.ToLowerInvariant()]));
+            // "genre != X" excludes a small set rather than selecting it, so it
+            // neither uses the id-probe shape nor counts as narrowing the query.
+            $"lower(g.name) = lower({param})", negate, !negate && Selective([value.Value.ToLowerInvariant()]));
     }
 
     // A library holds a few thousand tracks, so the library semi-join is the

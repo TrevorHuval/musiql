@@ -20,6 +20,9 @@ public class CompilerTests
         var negated = Engine.Compile("albums where genre != \"acid house\"", context).Query!.Sql;
         Assert.Contains("NOT (EXISTS", negated);
 
+        var excluded = Engine.Compile("tracks where genre != \"acid house\"", context).Query!.Sql;
+        Assert.Contains("UNION ALL", excluded);
+
         var broad = Engine.Compile("albums where genre = \"rock\"", context).Query!.Sql;
         Assert.Contains("EXISTS", broad);
 
