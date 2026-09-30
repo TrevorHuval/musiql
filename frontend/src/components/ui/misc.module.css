@@ -10,6 +10,8 @@
   letter-spacing: 0.01em;
   border: 1px solid var(--line-2);
   color: var(--paper-2);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .pill[data-tone='signal'] {
@@ -43,6 +45,8 @@
   color: var(--signal-hi);
   background: var(--signal-bg);
   border: 1px solid var(--signal-line);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .liveDot {
@@ -89,6 +93,13 @@
 
 .iconButton:active {
   transform: scale(0.94);
+}
+
+@media (max-width: 640px) {
+  .iconButton {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .iconButton[data-tone='danger']:hover {

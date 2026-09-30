@@ -38,6 +38,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .label {
@@ -50,9 +51,19 @@
 .hint {
   font-size: 12px;
   color: var(--paper-3);
+  overflow-wrap: anywhere;
 }
 
 .error {
   font-size: 12px;
   color: var(--clay-hi);
+  overflow-wrap: anywhere;
+}
+
+/* 16px stops iOS Safari zooming the page on focus; 44px is a comfortable tap target. */
+@media (max-width: 640px) {
+  .control {
+    height: 44px;
+    font-size: 16px;
+  }
 }

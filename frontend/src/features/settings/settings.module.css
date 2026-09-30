@@ -18,6 +18,7 @@
   margin: 6px 0 0;
   font-size: 14px;
   color: var(--paper-2);
+  overflow-wrap: anywhere;
 }
 
 .card {
@@ -102,10 +103,20 @@
   gap: 16px;
 }
 
+.accountRow > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.accountRow > button {
+  flex-shrink: 0;
+}
+
 .accountName {
   font-size: 15px;
   font-weight: 500;
   color: var(--paper);
+  overflow-wrap: anywhere;
 }
 
 .accountMeta {
@@ -124,9 +135,10 @@
 
 .syncHead {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px 12px;
 }
 
 .sectionLabel {
@@ -141,6 +153,7 @@
   font-size: 13.5px;
   line-height: 1.5;
   color: var(--paper-2);
+  overflow-wrap: anywhere;
 }
 
 .syncStatus .mono {
@@ -166,6 +179,11 @@
   gap: 16px;
   max-width: 420px;
   width: 100%;
+  min-width: 0;
+}
+
+.callbackCard > * {
+  max-width: 100%;
 }
 
 .callbackText {
@@ -174,6 +192,7 @@
 }
 
 .callbackLink {
+  padding: 10px 12px;
   font-size: 13.5px;
   color: var(--signal-hi);
   text-decoration: none;
@@ -181,4 +200,35 @@
 
 .callbackLink:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
+  .head {
+    margin-bottom: 20px;
+  }
+
+  .cardHead {
+    padding: 16px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .accountRow {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .accountRow > :first-child {
+    flex-basis: 230px;
+  }
+
+  .callback {
+    padding: 40px 16px;
+  }
 }

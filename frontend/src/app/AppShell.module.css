@@ -13,7 +13,7 @@
   justify-content: space-between;
   gap: 16px;
   height: 56px;
-  padding: 0 20px;
+  padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
   background: color-mix(in srgb, var(--vinyl) 88%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
@@ -25,6 +25,7 @@
   gap: 10px;
   text-decoration: none;
   color: var(--paper);
+  min-width: 0;
 }
 
 .brandMark {
@@ -49,6 +50,7 @@
 .actions {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 8px;
 }
 
@@ -95,5 +97,26 @@
   .brandTag,
   .user {
     display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    gap: 8px;
+    padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+  }
+
+  .actions {
+    gap: 2px;
+  }
+
+  .navIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .brand {
+    min-height: 40px;
+    align-items: center;
   }
 }

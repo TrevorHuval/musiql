@@ -21,3 +21,9 @@
   color: var(--paper-2);
   font-weight: 500;
 }
+
+@media (max-width: 640px) {
+  .submit {
+    height: 44px;
+  }
+}

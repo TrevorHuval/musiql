@@ -10,6 +10,7 @@
   letter-spacing: 0.01em;
   cursor: pointer;
   white-space: nowrap;
+  max-width: 100%;
   transition:
     background-color 130ms var(--ease-out),
     border-color 130ms var(--ease-out),
@@ -77,6 +78,16 @@
 
 .danger:hover:not(:disabled) {
   background: var(--clay-bg);
+}
+
+@media (max-width: 640px) {
+  .md {
+    height: 44px;
+  }
+
+  .sm {
+    height: 40px;
+  }
 }
 
 .label {
