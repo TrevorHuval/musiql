@@ -46,6 +46,7 @@
 .body {
   flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .title {

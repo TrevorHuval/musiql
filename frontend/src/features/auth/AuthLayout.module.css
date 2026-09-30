@@ -70,10 +70,35 @@
 }
 
 .tagline {
+  overflow-wrap: anywhere;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--paper-4);
   text-align: center;
   max-width: 340px;
   line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .page {
+    justify-content: flex-start;
+    padding: max(24px, env(safe-area-inset-top)) 16px 32px;
+  }
+
+  .panel {
+    padding: 24px 20px;
+  }
+
+  .brand {
+    min-height: 40px;
+  }
+
+  .intro {
+    margin: 12px 0 20px;
+  }
+
+  .footer a {
+    display: inline-block;
+    padding: 11px 2px;
+  }
 }

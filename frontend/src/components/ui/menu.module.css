@@ -1,4 +1,6 @@
 .trigger {
+  max-width: 100%;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -46,8 +48,9 @@
 
 .menu {
   z-index: 40;
-  min-width: max(var(--button-width, 0px), var(--input-width, 0px), 150px);
-  max-height: 280px;
+  min-width: min(max(var(--button-width, 0px), var(--input-width, 0px), 150px), calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+  max-height: min(280px, 60dvh);
   margin-top: 5px;
   padding: 5px;
   background: var(--raised);
@@ -76,6 +79,7 @@
   font-size: 13.5px;
   color: var(--paper-2);
   cursor: pointer;
+  overflow-wrap: anywhere;
 }
 
 .option[data-focus] {
@@ -127,4 +131,23 @@
   letter-spacing: 0.04em;
   text-align: center;
   color: var(--paper-4);
+}
+
+@media (max-width: 640px) {
+  .trigger {
+    height: 44px;
+  }
+
+  .trigger[data-size='sm'] {
+    height: 40px;
+  }
+
+  .option {
+    min-height: 40px;
+  }
+
+  .comboToggle {
+    width: 40px;
+    height: 40px;
+  }
 }

@@ -70,8 +70,9 @@
 
 .rowTitleLine {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 6px 10px;
 }
 
 .rowName {
@@ -79,6 +80,8 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--paper);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .rowDesc {
@@ -172,7 +175,52 @@
 }
 
 @media (max-width: 560px) {
+  .page {
+    padding: 24px 16px 48px;
+  }
+
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .row {
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px 12px;
+    padding: 14px 14px 8px;
+  }
+
+  .rowMain {
+    flex: 1 1 100%;
+  }
+
+  .rowMeta {
+    flex: 1 1 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .rowTime {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .rowActions {
     opacity: 1;
+    gap: 4px;
+  }
+
+  .empty {
+    padding: 48px 20px;
   }
 }
