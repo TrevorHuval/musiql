@@ -6,6 +6,9 @@ COPY . .
 # Path prefix to serve under behind a reverse proxy, e.g. --build-arg BASE_PATH=/musiql/
 ARG BASE_PATH=/
 ENV BASE_PATH=$BASE_PATH
+# GA4 measurement ID (public). Empty means no analytics tag is emitted.
+ARG GA_MEASUREMENT_ID=
+ENV GA_MEASUREMENT_ID=$GA_MEASUREMENT_ID
 RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime

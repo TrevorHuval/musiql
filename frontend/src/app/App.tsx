@@ -6,9 +6,12 @@ import { LibraryPage } from '../features/library/LibraryPage'
 import { EditorPage } from '../features/editor/EditorPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { SpotifyCallbackPage } from '../features/settings/SpotifyCallbackPage'
+import { usePageViews } from '../lib/analytics'
 import { AppShell } from './AppShell'
 
 export function App() {
+  usePageViews()
+
   return (
     <Routes>
       <Route element={<GuestRoute />}>

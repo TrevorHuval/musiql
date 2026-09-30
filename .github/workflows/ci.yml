@@ -144,6 +144,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             BASE_PATH=/musiql/
+            GA_MEASUREMENT_ID=G-6HZSVBWNTD
           tags: |
             ghcr.io/trevorhuval/musiql-web:latest
             ghcr.io/trevorhuval/musiql-web:${{ github.sha }}

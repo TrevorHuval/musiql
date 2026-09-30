@@ -1,6 +1,7 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { analytics } from './scripts/analytics.ts'
 
 // Path prefix the app is served under (e.g. "/musiql/" behind a reverse proxy).
 // Set BASE_PATH at build time; defaults to the site root for local development.
@@ -8,7 +9,7 @@ const basePath = process.env.BASE_PATH ?? '/'
 
 export default defineConfig({
   base: basePath,
-  plugins: [react()],
+  plugins: [react(), analytics()],
   server: {
     host: '127.0.0.1',
     proxy: {
