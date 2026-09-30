@@ -1,20 +1,27 @@
+using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using MusiQL.Data.App;
 
 namespace MusiQL.Api.Spotify;
 
-// Re-exports "keep live" playlists to Spotify once a day so the Spotify copy
-// follows the query as the catalog and the user's library change. Runs one
-// playlist at a time; a failure is recorded on the link for the UI and retried
-// after a back-off instead of on every pass.
+// The daily Spotify pass. It first re-syncs the saved tracks of every account
+// that has synced its library before (so likes made in Spotify reach
+// `from library` queries without a manual sync), then re-exports "keep live"
+// playlists so the Spotify copy follows the query as the catalog and the
+// library change. Runs one account or playlist at a time; a playlist failure is
+// recorded on its link for the UI and retried after a back-off instead of on
+// every pass, and a library sync failure is backed off the same way in memory.
 public sealed class LivePlaylistRefresher(
     IServiceScopeFactory scopes, OperationLocks locks, ILogger<LivePlaylistRefresher> log, TimeProvider clock)
     : BackgroundService
 {
     public static readonly TimeSpan RefreshEvery = TimeSpan.FromDays(1);
+    public static readonly TimeSpan LibrarySyncEvery = TimeSpan.FromDays(1);
     public static readonly TimeSpan RetryFailedAfter = TimeSpan.FromHours(6);
     private static readonly TimeSpan PollEvery = TimeSpan.FromMinutes(30);
     private const int MaxErrorLength = 500;
+
+    private readonly ConcurrentDictionary<Guid, DateTime> _librarySyncFailedAt = new();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -37,6 +44,8 @@ public sealed class LivePlaylistRefresher(
 
     public async Task<int> RunDueAsync(CancellationToken ct)
     {
+        await SyncLibrariesAsync(ct);
+
         var due = await DueAsync(ct);
         foreach (var playlistId in due)
         {
@@ -44,6 +53,75 @@ public sealed class LivePlaylistRefresher(
         }
 
         return due.Count;
+    }
+
+    // Only accounts that already synced once are refreshed: the first sync is the
+    // user's opt-in to keeping their saved tracks in MusiQL.
+    public async Task<int> SyncLibrariesAsync(CancellationToken ct)
+    {
+        var due = await LibrarySyncDueAsync(ct);
+        var synced = 0;
+        foreach (var userId in due)
+        {
+            if (await SyncLibraryAsync(userId, ct))
+            {
+                synced++;
+            }
+        }
+
+        return synced;
+    }
+
+    private async Task<List<Guid>> LibrarySyncDueAsync(CancellationToken ct)
+    {
+        using var scope = scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var now = clock.GetUtcNow().UtcDateTime;
+        var staleBefore = now - LibrarySyncEvery;
+        var retryBefore = now - RetryFailedAfter;
+
+        var stale = await db.SpotifyAccounts
+            .Where(a => a.LibrarySyncedAt != null && a.LibrarySyncedAt < staleBefore)
+            .OrderBy(a => a.LibrarySyncedAt)
+            .Select(a => a.UserId)
+            .ToListAsync(ct);
+
+        return stale
+            .Where(id => !_librarySyncFailedAt.TryGetValue(id, out var failedAt) || failedAt < retryBefore)
+            .ToList();
+    }
+
+    private async Task<bool> SyncLibraryAsync(Guid userId, CancellationToken ct)
+    {
+        IDisposable held;
+        try
+        {
+            held = locks.Acquire($"sync:{userId}", "A library sync");
+        }
+        catch (OperationInProgressException)
+        {
+            return false;
+        }
+
+        using (held)
+        {
+            using var scope = scopes.CreateScope();
+            var library = scope.ServiceProvider.GetRequiredService<SpotifyLibraryService>();
+            try
+            {
+                var result = await library.SyncAsync(userId, ct);
+                _librarySyncFailedAt.TryRemove(userId, out _);
+                log.LogInformation("Synced Spotify library for {UserId}: {Matched}/{Saved} saved tracks matched",
+                    userId, result.MatchedCount, result.SavedCount);
+                return true;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _librarySyncFailedAt[userId] = clock.GetUtcNow().UtcDateTime;
+                log.LogWarning(ex, "Spotify library sync for {UserId} failed", userId);
+                return false;
+            }
+        }
     }
 
     private async Task<List<Guid>> DueAsync(CancellationToken ct)
