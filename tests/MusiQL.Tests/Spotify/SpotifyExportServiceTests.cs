@@ -40,7 +40,7 @@ public class SpotifyExportServiceTests(ApiFixture fixture)
         Assert.Equal(expected.Count - expected.Count(t => t == missing), result.MatchedCount);
         Assert.Contains(result.Unmatched, u => u.Title == missing);
 
-        var pushed = client.Replaced[client.Created[0].Id];
+        var pushed = client.Playlists[client.Created[0].Id];
         var expectedUris = expected.Where(t => t != missing).Select(Uri).ToList();
         Assert.Equal(expectedUris, pushed);
     }
@@ -73,6 +73,80 @@ public class SpotifyExportServiceTests(ApiFixture fixture)
         await using var db = AppDbContextFactory.Create(fixture.ConnectionString);
         var persisted = await db.TrackMatches.CountAsync();
         Assert.True(persisted >= expected.Count);
+    }
+
+    [Fact]
+    public async Task Re_export_keeps_tracks_the_user_added_and_appends_new_ones()
+    {
+        if (!fixture.Available)
+        {
+            return;
+        }
+
+        var ownerId = await RegisterOwnerAsync();
+        var playlist = await SeedPlaylistAsync(ownerId, "Grunge Custom", GrungeMql);
+        var expected = await ExpectedTitlesAsync(ownerId);
+        Assert.True(expected.Count >= 3);
+
+        var client = EchoClient(null);
+        var export = BuildExport(client);
+        await export.ExportAsync(playlist, rematch: false, default);
+        var id = client.Created[0].Id;
+
+        const string local = "spotify:local:Me:Demos:Garage+Take:180";
+        const string manual = "spotify:track:handpicked";
+        client.Playlists[id].Insert(1, local);
+        client.Playlists[id].Add(manual);
+
+        // The query now drops one track, and the user deleted another from Spotify.
+        var dropped = Uri(expected[0]);
+        var deleted = Uri(expected[1]);
+        await UpdateMqlAsync(playlist.Id, GrungeMql.Replace("order by title", "and title != \"" + expected[0] + "\" order by title"));
+        client.Playlists[id].Remove(deleted);
+
+        await BuildExport(client).ExportAsync(await LoadPlaylistAsync(playlist.Id), rematch: false, default);
+
+        var items = client.Playlists[id];
+        Assert.Contains(local, items);
+        Assert.Contains(manual, items);
+        Assert.DoesNotContain(dropped, items);
+        Assert.Contains(deleted, items);
+        Assert.Equal(deleted, items[^1]);
+    }
+
+    [Fact]
+    public async Task First_re_export_of_a_ledgerless_link_claims_spotify_tracks_but_not_local_files()
+    {
+        if (!fixture.Available)
+        {
+            return;
+        }
+
+        var ownerId = await RegisterOwnerAsync();
+        var playlist = await SeedPlaylistAsync(ownerId, "Grunge Legacy", GrungeMql);
+        var expected = await ExpectedTitlesAsync(ownerId);
+
+        var client = EchoClient(null);
+        await BuildExport(client).ExportAsync(playlist, rematch: true, default);
+        var id = client.Created[0].Id;
+
+        // Simulate a link exported before the ledger existed.
+        await using (var db = AppDbContextFactory.Create(fixture.ConnectionString))
+        {
+            db.SpotifyPlaylistLinkTracks.RemoveRange(db.SpotifyPlaylistLinkTracks.Where(t => t.PlaylistId == playlist.Id));
+            await db.SaveChangesAsync();
+        }
+
+        const string local = "spotify:local:Me:Demos:Garage+Take:180";
+        client.Playlists[id].Add(local);
+        client.Playlists[id].Add("spotify:track:stale");
+
+        await BuildExport(client).ExportAsync(playlist, rematch: true, default);
+
+        var items = client.Playlists[id];
+        Assert.Contains(local, items);
+        Assert.DoesNotContain("spotify:track:stale", items);
+        Assert.Equal(expected.Distinct().Count(), items.Count(u => u != local));
     }
 
     [Fact]
@@ -143,6 +217,20 @@ public class SpotifyExportServiceTests(ApiFixture fixture)
         db.Playlists.Add(playlist);
         await db.SaveChangesAsync();
         return playlist;
+    }
+
+    private async Task UpdateMqlAsync(Guid playlistId, string mql)
+    {
+        await using var db = AppDbContextFactory.Create(fixture.ConnectionString);
+        var stored = await db.Playlists.SingleAsync(p => p.Id == playlistId);
+        stored.MqlText = mql;
+        await db.SaveChangesAsync();
+    }
+
+    private async Task<Playlist> LoadPlaylistAsync(Guid playlistId)
+    {
+        await using var db = AppDbContextFactory.Create(fixture.ConnectionString);
+        return await db.Playlists.AsNoTracking().SingleAsync(p => p.Id == playlistId);
     }
 
     private static string Uri(string title) => $"spotify:track:{title}";

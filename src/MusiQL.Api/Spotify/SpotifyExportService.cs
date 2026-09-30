@@ -12,6 +12,7 @@ public sealed class SpotifyExportService(
     ISpotifyClientFactory clientFactory,
     AppDbContext db)
 {
+    private const string TrackUriPrefix = "spotify:track:";
     private static readonly TimeSpan NegativeMatchTtl = TimeSpan.FromDays(7);
 
     public async Task<ExportResponse> ExportAsync(Playlist playlist, bool rematch, CancellationToken ct)
@@ -53,7 +54,7 @@ public sealed class SpotifyExportService(
         await db.SaveChangesAsync(ct);
 
         var target = await UpsertPlaylistAsync(playlist, session, ct);
-        await session.Client.ReplacePlaylistItemsAsync(target.Ref.Id, uris, ct);
+        await SyncItemsAsync(target.Link, target.Ref.Id, target.Created, uris, session.Client, ct);
 
         target.Link.TrackCount = uris.Count;
         target.Link.LastExportedAt = DateTime.UtcNow;
@@ -71,7 +72,67 @@ public sealed class SpotifyExportService(
             target.Link.LastExportedAt);
     }
 
-    private async Task<(SpotifyPlaylistRef Ref, SpotifyPlaylistLink Link)> UpsertPlaylistAsync(
+    // Brings the Spotify playlist in line with the query result without rewriting it:
+    // only tracks MusiQL added earlier (the ledger) are ever removed, and new tracks
+    // are appended. Local files and anything the user added by hand stay where they are.
+    private async Task SyncItemsAsync(
+        SpotifyPlaylistLink link, string spotifyPlaylistId, bool created,
+        IReadOnlyList<string> uris, ISpotifyUserClient client, CancellationToken ct)
+    {
+        var ledger = await db.SpotifyPlaylistLinkTracks
+            .Where(t => t.PlaylistId == link.PlaylistId)
+            .ToDictionaryAsync(t => t.SpotifyUri, ct);
+
+        if (created)
+        {
+            db.SpotifyPlaylistLinkTracks.RemoveRange(ledger.Values);
+            ledger.Clear();
+        }
+
+        IReadOnlyList<string> current = created ? [] : await client.GetPlaylistItemUrisAsync(spotifyPlaylistId, ct);
+        var present = current.ToHashSet();
+        var desired = uris.ToHashSet();
+
+        // Exports from before the ledger existed wrote every Spotify track on the playlist
+        // themselves, so those count as ours. Local files and episodes are never claimed.
+        var owned = ledger.Count == 0 && link.TrackCount > 0 && !created
+            ? present.Where(u => u.StartsWith(TrackUriPrefix, StringComparison.Ordinal)).ToHashSet()
+            : ledger.Keys.ToHashSet();
+
+        var addedByUser = present.Except(owned).ToHashSet();
+        var keep = uris.Distinct().Where(u => !addedByUser.Contains(u)).ToList();
+        var toAdd = keep.Where(u => !present.Contains(u)).ToList();
+        var toRemove = owned.Where(u => present.Contains(u) && !desired.Contains(u)).ToList();
+
+        // Claim what is about to be added, and keep what is about to be removed, before
+        // calling Spotify, so a failure part-way never leaves a track we wrote unowned.
+        SyncLedger(link.PlaylistId, ledger, keep.Concat(toRemove));
+        await db.SaveChangesAsync(ct);
+
+        await client.RemovePlaylistItemsAsync(spotifyPlaylistId, toRemove, ct);
+        await client.AddPlaylistItemsAsync(spotifyPlaylistId, toAdd, ct);
+
+        SyncLedger(link.PlaylistId, ledger, keep);
+    }
+
+    private void SyncLedger(Guid playlistId, Dictionary<string, SpotifyPlaylistLinkTrack> ledger, IEnumerable<string> wanted)
+    {
+        var wantedSet = wanted.ToHashSet();
+        foreach (var (uri, row) in ledger.Where(e => !wantedSet.Contains(e.Key)).ToList())
+        {
+            db.SpotifyPlaylistLinkTracks.Remove(row);
+            ledger.Remove(uri);
+        }
+
+        foreach (var uri in wantedSet.Where(u => !ledger.ContainsKey(u)))
+        {
+            var row = new SpotifyPlaylistLinkTrack { PlaylistId = playlistId, SpotifyUri = uri };
+            db.SpotifyPlaylistLinkTracks.Add(row);
+            ledger[uri] = row;
+        }
+    }
+
+    private async Task<(SpotifyPlaylistRef Ref, SpotifyPlaylistLink Link, bool Created)> UpsertPlaylistAsync(
         Playlist playlist, SpotifyUserSession session, CancellationToken ct)
     {
         var description = Description(playlist);
@@ -83,7 +144,7 @@ public sealed class SpotifyExportService(
             if (existing is not null)
             {
                 await session.Client.UpdatePlaylistDetailsAsync(existing.Id, playlist.Name, description, ct);
-                return (existing with { Name = playlist.Name }, link);
+                return (existing with { Name = playlist.Name }, link, false);
             }
         }
 
@@ -92,12 +153,17 @@ public sealed class SpotifyExportService(
 
         if (link is null)
         {
-            link = new SpotifyPlaylistLink { PlaylistId = playlist.Id, UserId = playlist.OwnerId };
+            link = new SpotifyPlaylistLink
+            {
+                PlaylistId = playlist.Id,
+                UserId = playlist.OwnerId,
+                LastExportedAt = DateTime.UnixEpoch
+            };
             db.SpotifyPlaylistLinks.Add(link);
         }
 
         link.SpotifyPlaylistId = created.Id;
-        return (created, link);
+        return (created, link, true);
     }
 
     private async Task<TrackMatchResult> ResolveMatchAsync(

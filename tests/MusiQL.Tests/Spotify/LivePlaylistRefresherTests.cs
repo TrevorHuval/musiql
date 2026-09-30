@@ -68,9 +68,9 @@ public class LivePlaylistRefresherTests(ApiFixture fixture)
             Assert.True(link.KeepLive);
         }
 
-        var calls = client.Replaced.Count;
+        var calls = client.Playlists.Count;
         await Refresher(client).RunDueAsync(default);
-        Assert.Equal(calls, client.Replaced.Count);
+        Assert.Equal(calls, client.Playlists.Count);
     }
 
     [Fact]

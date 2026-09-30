@@ -52,15 +52,38 @@ public sealed class SpotifyUserClient(HttpClient http, string accessToken) : ISp
         await SendAsync<Unit>(HttpMethod.Put, $"v1/playlists/{Uri.EscapeDataString(playlistId)}", body, ct);
     }
 
-    public async Task ReplacePlaylistItemsAsync(string playlistId, IReadOnlyList<string> uris, CancellationToken ct)
+    public async Task<IReadOnlyList<string>> GetPlaylistItemUrisAsync(string playlistId, CancellationToken ct)
+    {
+        var uris = new List<string>();
+        for (var offset = 0; ; offset += PlaylistBatchSize)
+        {
+            var page = await GetAsync<PlaylistItemsPageDto>(
+                $"v1/playlists/{Uri.EscapeDataString(playlistId)}/tracks" +
+                $"?fields=items(track(uri)),next&limit={PlaylistBatchSize}&offset={offset}", ct);
+            uris.AddRange(page!.Items.Where(i => i.Track is not null).Select(i => i.Track!.Uri));
+            if (page.Next is null)
+            {
+                return uris;
+            }
+        }
+    }
+
+    public async Task AddPlaylistItemsAsync(string playlistId, IReadOnlyList<string> uris, CancellationToken ct)
     {
         var path = $"v1/playlists/{Uri.EscapeDataString(playlistId)}/tracks";
-        var first = uris.Take(PlaylistBatchSize).ToArray();
-        await SendAsync<Unit>(HttpMethod.Put, path, new UrisDto(first), ct);
-
-        foreach (var batch in uris.Skip(PlaylistBatchSize).Chunk(PlaylistBatchSize))
+        foreach (var batch in uris.Chunk(PlaylistBatchSize))
         {
             await SendAsync<Unit>(HttpMethod.Post, path, new UrisDto(batch), ct);
+        }
+    }
+
+    public async Task RemovePlaylistItemsAsync(string playlistId, IReadOnlyList<string> uris, CancellationToken ct)
+    {
+        var path = $"v1/playlists/{Uri.EscapeDataString(playlistId)}/tracks";
+        foreach (var batch in uris.Chunk(PlaylistBatchSize))
+        {
+            var body = new RemoveItemsDto(batch.Select(u => new UriDto(u)).ToArray());
+            await SendAsync<Unit>(HttpMethod.Delete, path, body, ct);
         }
     }
 
@@ -190,6 +213,14 @@ public sealed class SpotifyUserClient(HttpClient http, string accessToken) : ISp
     private sealed record UpdatePlaylistDto(string Name, string Description);
 
     private sealed record UrisDto(IReadOnlyList<string> Uris);
+
+    private sealed record UriDto(string Uri);
+
+    private sealed record RemoveItemsDto(IReadOnlyList<UriDto> Tracks);
+
+    private sealed record PlaylistItemsPageDto(IReadOnlyList<PlaylistItemDto> Items, string? Next);
+
+    private sealed record PlaylistItemDto(UriDto? Track);
 
     private sealed record SavedPageDto(IReadOnlyList<SavedItemDto> Items, int Total);
 

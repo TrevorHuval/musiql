@@ -10,7 +10,7 @@ public sealed class FakeSpotifyClient : ISpotifyUserClient
     public List<SpotifySavedItem> Saved { get; set; } = [];
 
     public List<(string Id, string Name, string? Description)> Created { get; } = [];
-    public Dictionary<string, List<string>> Replaced { get; } = [];
+    public Dictionary<string, List<string>> Playlists { get; } = [];
     public HashSet<string> ExistingPlaylists { get; } = [];
     public int TextSearchCalls { get; private set; }
     public int IsrcSearchCalls { get; private set; }
@@ -38,6 +38,7 @@ public sealed class FakeSpotifyClient : ISpotifyUserClient
         var id = $"pl{++_counter}";
         Created.Add((id, name, description));
         ExistingPlaylists.Add(id);
+        Playlists[id] = [];
         return Task.FromResult(new SpotifyPlaylistRef(id, name, $"https://open.spotify.com/playlist/{id}"));
     }
 
@@ -49,9 +50,18 @@ public sealed class FakeSpotifyClient : ISpotifyUserClient
     public Task UpdatePlaylistDetailsAsync(
         string playlistId, string name, string? description, CancellationToken ct) => Task.CompletedTask;
 
-    public Task ReplacePlaylistItemsAsync(string playlistId, IReadOnlyList<string> uris, CancellationToken ct)
+    public Task<IReadOnlyList<string>> GetPlaylistItemUrisAsync(string playlistId, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<string>>(Playlists[playlistId].ToList());
+
+    public Task AddPlaylistItemsAsync(string playlistId, IReadOnlyList<string> uris, CancellationToken ct)
     {
-        Replaced[playlistId] = uris.ToList();
+        Playlists[playlistId].AddRange(uris);
+        return Task.CompletedTask;
+    }
+
+    public Task RemovePlaylistItemsAsync(string playlistId, IReadOnlyList<string> uris, CancellationToken ct)
+    {
+        Playlists[playlistId].RemoveAll(uris.ToHashSet().Contains);
         return Task.CompletedTask;
     }
 

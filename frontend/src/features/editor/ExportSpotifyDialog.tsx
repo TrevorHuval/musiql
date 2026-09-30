@@ -117,7 +117,7 @@ function Ready({
         </p>
       )}
       <p className={styles.note}>
-        Re-exporting replaces the Spotify playlist’s contents so it mirrors this live query.
+        Re-exporting removes tracks that no longer match and appends new ones. Local files and tracks you added in Spotify are kept.
       </p>
       {exported && <KeepLiveRow playlistId={playlistId} link={link} />}
       {error && (

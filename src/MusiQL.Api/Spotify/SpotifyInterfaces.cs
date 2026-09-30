@@ -13,7 +13,9 @@ public interface ISpotifyUserClient : ISpotifySearch
         string spotifyUserId, string name, string? description, CancellationToken ct);
     Task<SpotifyPlaylistRef?> GetPlaylistAsync(string playlistId, CancellationToken ct);
     Task UpdatePlaylistDetailsAsync(string playlistId, string name, string? description, CancellationToken ct);
-    Task ReplacePlaylistItemsAsync(string playlistId, IReadOnlyList<string> uris, CancellationToken ct);
+    Task<IReadOnlyList<string>> GetPlaylistItemUrisAsync(string playlistId, CancellationToken ct);
+    Task AddPlaylistItemsAsync(string playlistId, IReadOnlyList<string> uris, CancellationToken ct);
+    Task RemovePlaylistItemsAsync(string playlistId, IReadOnlyList<string> uris, CancellationToken ct);
     Task<SpotifySavedPage> GetSavedTracksAsync(int offset, int limit, CancellationToken ct);
 }
 

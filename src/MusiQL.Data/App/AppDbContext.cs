@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<SpotifyAccount> SpotifyAccounts => Set<SpotifyAccount>();
     public DbSet<SpotifyAuthState> SpotifyAuthStates => Set<SpotifyAuthState>();
     public DbSet<SpotifyPlaylistLink> SpotifyPlaylistLinks => Set<SpotifyPlaylistLink>();
+    public DbSet<SpotifyPlaylistLinkTrack> SpotifyPlaylistLinkTracks => Set<SpotifyPlaylistLinkTrack>();
     public DbSet<SpotifySavedTrack> SpotifySavedTracks => Set<SpotifySavedTrack>();
     public DbSet<TrackMatch> TrackMatches => Set<TrackMatch>();
     public DbSet<RecordingIsrc> RecordingIsrcs => Set<RecordingIsrc>();
@@ -99,6 +100,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasIndex(l => l.UserId);
             e.HasIndex(l => l.KeepLive).HasFilter("keep_live");
             e.HasOne<Playlist>().WithMany().HasForeignKey(l => l.PlaylistId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<SpotifyPlaylistLinkTrack>(e =>
+        {
+            e.ToTable("spotify_playlist_link_track");
+            e.HasKey(t => new { t.PlaylistId, t.SpotifyUri });
+            e.Property(t => t.SpotifyUri).HasMaxLength(256);
+            e.HasOne<SpotifyPlaylistLink>().WithMany().HasForeignKey(t => t.PlaylistId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<SpotifySavedTrack>(e =>
