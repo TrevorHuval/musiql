@@ -131,7 +131,10 @@ function ResultsTable({ page }: { page: QueryPage }) {
           {page.rows.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {visible.map(({ column, index }) => (
-                <td key={column.name} className={isNumeric(column) ? styles.numCell : undefined}>
+                <td
+                  key={column.name}
+                  data-label={columnLabel(column.name)}
+                  className={isNumeric(column) ? styles.numCell : undefined}>
                   {formatCell(row[index], column)}
                 </td>
               ))}

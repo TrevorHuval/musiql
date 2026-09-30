@@ -245,8 +245,137 @@
   color: var(--paper-3);
 }
 
-@media (max-width: 560px) {
-  .conditionControls {
+@media (max-width: 640px) {
+  .sourceRow > * {
+    max-width: 100%;
+  }
+
+  /* The AND/OR rail moves above each row instead of eating a 62px column, so
+     nested groups keep their width. */
+  .item {
     flex-direction: column;
+    gap: 6px;
+  }
+
+  .rail {
+    width: auto;
+    justify-content: flex-start;
+    padding-top: 0;
+  }
+
+  .combinator {
+    position: relative;
+    height: 26px;
+  }
+
+  .combinator::before {
+    content: '';
+    position: absolute;
+    inset: -8px -6px;
+  }
+
+  .addRow,
+  .group[data-root] > .addRow,
+  .subGroup .addRow {
+    padding-left: 0;
+    flex-wrap: wrap;
+  }
+
+  .addButton {
+    height: 40px;
+    padding: 0 14px;
+  }
+
+  /* Field and operator share the first row with the remove button; the value
+     gets a full-width row of its own. */
+  .condition {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .conditionControls {
+    grid-area: 1 / 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    min-width: 0;
+  }
+
+  .conditionControls > * {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .condition > .conditionRemove {
+    grid-area: 1 / 2;
+    width: 40px;
+    height: 40px;
+  }
+
+  .conditionValue {
+    grid-area: 2 / 1 / 3 / 3;
+    min-width: 0;
+  }
+
+  .betweenRow > :not(.betweenAnd) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .valueListRow > :first-child {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .valueRemove {
+    width: 40px;
+    height: 40px;
+  }
+
+  .addValue {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .subGroup {
+    padding: 8px;
+  }
+
+  .subGroupLabel,
+  .subGroupHint {
+    white-space: nowrap;
+  }
+
+  .subGroupHead .subGroupRemove {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sortRow {
+    flex-wrap: wrap;
+  }
+
+  .limitRow {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .limitHint {
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+}
+
+/* Nested groups on the narrowest phones leave ~90px per select; stack field
+   and operator so their labels stay readable. */
+@media (max-width: 400px) {
+  .conditionControls {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

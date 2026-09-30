@@ -12,12 +12,14 @@
 }
 
 .lead {
+  overflow-wrap: anywhere;
   font-size: 14px;
   line-height: 1.55;
   color: var(--paper-2);
 }
 
 .note {
+  overflow-wrap: anywhere;
   font-size: 12.5px;
   line-height: 1.5;
   color: var(--paper-3);
@@ -33,6 +35,7 @@
 }
 
 .progressText {
+  overflow-wrap: anywhere;
   font-size: 14px;
   color: var(--paper);
 }
@@ -176,7 +179,7 @@
 .inlineLink {
   color: var(--signal-hi);
   text-decoration: none;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .inlineLink:hover {
@@ -209,13 +212,49 @@
 }
 
 .keepLiveTitle {
+  overflow-wrap: anywhere;
   font-size: 13.5px;
   font-weight: 500;
   color: var(--paper);
 }
 
 .keepLiveMeta {
+  overflow-wrap: anywhere;
   font-family: var(--font-mono);
   font-size: 11.5px;
   color: var(--paper-3);
+}
+
+@media (max-width: 640px) {
+  /* Stack the dialog actions full width, primary first, so long labels and
+     three-button rows never squeeze each other. */
+  .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .openLink,
+  .actions .openLink {
+    justify-content: center;
+    height: 44px;
+    margin-right: 0;
+  }
+
+  /* Inline link inside a sentence: grow the hit area without moving the text. */
+  .inlineLink {
+    display: inline-block;
+    padding: 11px 0;
+    margin: -11px 0;
+  }
+
+  .keepLive {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .unmatchedRow {
+    gap: 8px;
+    padding: 9px 12px;
+  }
 }

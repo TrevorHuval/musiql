@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  height: 46px;
+  min-height: 46px;
   padding: 0 16px;
   border-bottom: 1px solid var(--line);
 }
@@ -20,7 +20,9 @@
 .headLeft {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  min-width: 0;
 }
 
 .headTitle {
@@ -115,6 +117,7 @@
 
 .calloutWrap {
   padding: 18px;
+  overflow-wrap: anywhere;
 }
 
 .connectLink {
@@ -192,4 +195,91 @@
 
 .flip {
   transform: rotate(180deg);
+}
+
+@media (max-width: 640px) {
+  .head {
+    flex-wrap: wrap;
+    padding: 6px 12px;
+    gap: 4px 12px;
+  }
+
+  .calloutWrap {
+    padding: 12px;
+  }
+
+  .connectLink {
+    height: 40px;
+  }
+
+  .placeholder {
+    padding: 36px 20px;
+  }
+
+  /* Rows become cards: the first column is the heading, every other column is
+     a labelled line underneath, so nothing needs a sideways scroll. */
+  .tableScroll {
+    overflow-x: visible;
+  }
+
+  .table,
+  .table tbody {
+    display: block;
+  }
+
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .table tbody tr {
+    display: block;
+    padding: 10px 14px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table tbody td,
+  .table tbody tr:last-child td {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 10px;
+    padding: 2px 0;
+    border-bottom: 0;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    background: none;
+  }
+
+  .table tbody td::before {
+    content: attr(data-label);
+    padding-top: 2px;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--paper-4);
+  }
+
+  .table tbody td:first-child,
+  .table tbody tr:last-child td:first-child {
+    display: block;
+    padding-bottom: 4px;
+    font-size: 14.5px;
+    line-height: 1.35;
+  }
+
+  .table tbody td:first-child::before,
+  .table tbody tr:last-child td:first-child::before {
+    display: none;
+  }
 }
