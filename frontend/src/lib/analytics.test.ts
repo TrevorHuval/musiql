@@ -1,4 +1,4 @@
-import { reportedPath } from './analytics'
+import { reportedPath, shouldReport } from './analytics'
 
 describe('reportedPath', () => {
   it('collapses playlist ids', () => {
@@ -9,5 +9,21 @@ describe('reportedPath', () => {
     expect(reportedPath('/playlists/new')).toBe('/playlists/new')
     expect(reportedPath('/')).toBe('/')
     expect(reportedPath('/settings')).toBe('/settings')
+  })
+})
+
+describe('shouldReport', () => {
+  it('reports the sign-in pages to signed-out visitors', () => {
+    expect(shouldReport('/login', false)).toBe(true)
+    expect(shouldReport('/register', false)).toBe(true)
+  })
+
+  it('skips the signed-out pass through a protected route before the redirect', () => {
+    expect(shouldReport('/', false)).toBe(false)
+    expect(shouldReport('/', true)).toBe(true)
+  })
+
+  it('never reports the Spotify callback', () => {
+    expect(shouldReport('/settings/spotify/callback', true)).toBe(false)
   })
 })

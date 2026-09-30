@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 
 declare global {
   interface Window {
@@ -9,14 +10,22 @@ declare global {
   }
 }
 
-/** Sign-in screens and the Spotify callback, whose query string carries an OAuth code. */
-const UNTRACKED = /^\/(login|register|settings\/spotify\/callback)(\/|$)/
+/** The Spotify callback's query string carries an OAuth code. */
+const UNTRACKED = /^\/settings\/spotify\/callback(\/|$)/
+
+/** Reachable without an account; anything else while signed out is only a redirect to /login. */
+const PUBLIC = /^\/(login|register)$/
 
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '')
 
 /** Playlist ids are per-user data; report the route, not the record. */
 export function reportedPath(pathname: string): string {
   return pathname.replace(/^\/playlists\/(?!new$)[^/]+/, '/playlists/:id')
+}
+
+export function shouldReport(pathname: string, signedIn: boolean): boolean {
+  if (UNTRACKED.test(pathname)) return false
+  return signedIn || PUBLIC.test(pathname)
 }
 
 /**
@@ -26,9 +35,13 @@ export function reportedPath(pathname: string): string {
  */
 export function usePageViews() {
   const { pathname } = useLocation()
+  const signedIn = useAuth().user !== null
+  const signedInRef = useRef(signedIn)
+  signedInRef.current = signedIn
 
   useEffect(() => {
-    if (window.gaEnabled !== true || window.gtag === undefined || UNTRACKED.test(pathname)) return
+    if (window.gaEnabled !== true || window.gtag === undefined) return
+    if (!shouldReport(pathname, signedInRef.current)) return
 
     const path = base + reportedPath(pathname)
     window.gtag('event', 'page_view', {
