@@ -28,9 +28,11 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  min-width: 0;
 }
 
 .back {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -59,19 +61,25 @@
 .titleBlock {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 7px;
+  min-width: 0;
 }
 
 .titleLine {
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .title {
+  min-width: 0;
   font-size: 21px;
   font-weight: 600;
   letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
 .toolbarRight {
@@ -88,6 +96,7 @@
 
 .switchNote {
   margin-top: -2px;
+  overflow-wrap: anywhere;
 }
 
 .deck {
@@ -132,6 +141,7 @@
   line-height: 1.5;
   color: var(--paper);
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .readoutHint {
@@ -152,5 +162,60 @@
 @media (max-width: 620px) {
   .readoutHint {
     display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 16px 16px 56px;
+    gap: 14px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .toolbarLeft {
+    align-items: center;
+  }
+
+  .back {
+    width: 40px;
+    height: 40px;
+    margin-top: 0;
+  }
+
+  .title {
+    font-size: 18px;
+    line-height: 1.25;
+  }
+
+  /* The rename pencil sits at the end of the (possibly multi-line) title. */
+  .titleLine > button {
+    flex-shrink: 0;
+    width: 40px;
+  }
+
+  .toolbarRight {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Save takes the leftover width so the row never ends in a stub. */
+  .toolbarRight > :last-child {
+    flex: 1 1 auto;
+    min-width: 132px;
+  }
+
+  .deck {
+    padding: 14px;
+  }
+
+  .readout {
+    align-items: flex-start;
+    padding: 12px;
+    gap: 10px;
   }
 }
