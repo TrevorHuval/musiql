@@ -1,51 +1,42 @@
 .page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 40px 24px 64px;
+  padding-bottom: var(--space-section);
 }
 
-.head {
-  margin-bottom: 28px;
-}
-
-.title {
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.subtitle {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: var(--paper-2);
+.lead {
+  max-width: 65ch;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 
+.body {
+  max-width: 44rem;
+  padding-top: var(--space-xl);
+}
+
 .card {
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--panel);
-  overflow: hidden;
+  gap: 0;
+  padding: 0;
 }
 
 .cardHead {
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--line);
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 2rem;
+  height: 2rem;
   border-radius: var(--r-sm);
-  color: var(--signal-hi);
-  background: var(--signal-bg);
-  border: 1px solid var(--signal-line);
+  color: var(--ink);
+  background: var(--fill);
 }
 
 .cardHeadText {
@@ -53,54 +44,46 @@
   min-width: 0;
 }
 
-.cardTitle {
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
 .cardMeta {
-  margin: 2px 0 0;
-  font-size: 12.5px;
-  color: var(--paper-3);
+  margin: 0;
 }
 
 .panel {
-  padding: 20px;
+  padding: var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .loading {
   display: flex;
   justify-content: center;
-  padding: 32px 0;
+  padding: var(--space-xl) 0;
 }
 
-.lead {
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--paper-2);
+.lead2 {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
   max-width: 52ch;
 }
 
 .mono {
   font-family: var(--font-mono);
   font-size: 0.92em;
-  color: var(--signal-hi);
+  color: var(--ink);
 }
 
 .actions {
   display: flex;
-  gap: 10px;
+  gap: var(--space-xs);
 }
 
 .accountRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .accountRow > :first-child {
@@ -113,24 +96,23 @@
 }
 
 .accountName {
-  font-size: 15px;
+  font-size: var(--text-base);
+  line-height: 1.6;
   font-weight: 500;
-  color: var(--paper);
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
 .accountMeta {
-  margin: 3px 0 0;
-  font-size: 12.5px;
-  color: var(--paper-3);
+  margin: 0;
 }
 
 .syncBlock {
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--hairline);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .syncHead {
@@ -138,21 +120,13 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 12px;
-}
-
-.sectionLabel {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--paper-3);
+  gap: var(--space-xs) var(--space-sm);
 }
 
 .syncStatus {
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: var(--paper-2);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 
@@ -163,21 +137,21 @@
 .btnIcon {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 
 .callback {
   display: flex;
   justify-content: center;
-  padding: 80px 24px;
+  padding-block: var(--space-section);
 }
 
 .callbackCard {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  max-width: 420px;
+  gap: var(--space-md);
+  max-width: 26rem;
   width: 100%;
   min-width: 0;
 }
@@ -187,48 +161,35 @@
 }
 
 .callbackText {
-  font-size: 14px;
-  color: var(--paper-2);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-secondary);
 }
 
 .callbackLink {
-  padding: 10px 12px;
-  font-size: 13.5px;
-  color: var(--signal-hi);
-  text-decoration: none;
-}
-
-.callbackLink:hover {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height);
+  padding-inline: var(--space-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-@media (max-width: 560px) {
-  .page {
-    padding: 24px 16px 48px;
-  }
-
-  .head {
-    margin-bottom: 20px;
-  }
-
-  .cardHead {
-    padding: 16px;
-  }
-
+@media (max-width: 640px) {
+  .cardHead,
   .panel {
-    padding: 16px;
+    padding: var(--space-md);
   }
 
   .accountRow {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: var(--space-sm);
   }
 
   .accountRow > :first-child {
-    flex-basis: 230px;
-  }
-
-  .callback {
-    padding: 40px 16px;
+    flex-basis: 14rem;
   }
 }

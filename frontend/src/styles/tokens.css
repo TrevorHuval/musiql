@@ -1,0 +1,179 @@
+/* site-design: drop-in, color-free tokens, reset and base styles.
+ *
+ * COLOR CONTRACT (the project supplies these; this file defines none of them).
+ * Define every role under :root[data-theme='dark'] and :root[data-theme='light'], plus a
+ * prefers-color-scheme default for when no data-theme attribute is set (see the skeleton
+ * in SKILL.md section 2).
+ *
+ *   --frame           page background behind everything
+ *   --sheet           raised surface: cards, nav bar, dialogs
+ *   --sheet-glass     --sheet at ~94% alpha, for blurred overlays (photo labels)
+ *   --fill            recessed or chip surface (inputs, chips, segmented track)
+ *   --fill-subtle     lighter end of a quiet-button gradient
+ *   --fill-strong     raised end of a pill / active-state gradient
+ *   --border          strong divider, unselected dot, node outline
+ *   --hairline        quiet 1px divider
+ *   --text            body text
+ *   --text-secondary  supporting text (>= 4.5:1 on every surface it sits on)
+ *   --text-soft       between secondary and tertiary
+ *   --text-tertiary   metadata, eyebrows (still >= 4.5:1)
+ *   --ink             headings, primary button fill, current-item text
+ *   --on-ink          text on an --ink fill
+ *   --accent          the ONE accent: focus ring, selection, current indicator only
+ *   --scrim           dialog backdrop (a color with alpha)
+ *   --ring-tint       channel triplet for the 1px shadow ring: a lit tone in a dark
+ *                     scheme, a dark tone in a light scheme
+ *   --shadow-tint     channel triplet for drops and shaded edges (a dark tone)
+ *   --highlight-tint  channel triplet for lit top edges (a light tone)
+ *   --outline-image   1px inner outline on photos (a color with alpha)
+ *
+ * The three tint roles are bare space-separated channel numbers (no commas, no function),
+ * because the recipes below wrap them in rgb(... / alpha).
+ */
+
+/* Plain CSS: declare the layer order once, first. (Tailwind already does this.) */
+@layer base, components;
+
+:root {
+  /* Fonts */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+
+  /* Radii */
+  --r-xs: 7px;
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-control: 999px;
+
+  /* Spacing (4px unit) */
+  --space-unit: 0.25rem;
+  --space-xs: calc(var(--space-unit) * 2);   /* 8  */
+  --space-sm: calc(var(--space-unit) * 3);   /* 12 */
+  --space-md: calc(var(--space-unit) * 4);   /* 16 */
+  --space-lg: calc(var(--space-unit) * 6);   /* 24 */
+  --space-xl: calc(var(--space-unit) * 8);   /* 32 */
+  --space-2xl: calc(var(--space-unit) * 12); /* 48 */
+  --space-section: clamp(4rem, 8vw, 7rem);
+  --page-gutter: clamp(1rem, 3.5vw, 3.5rem);
+  --page-width: 90rem;
+  --control-height: 2.75rem; /* 44px hit area */
+  --lightbox-photo-height: max(4rem, min(68dvh, calc(100dvh - 12rem)));
+
+  /* Type scale (size / line-height). In Tailwind v4 move these into @theme as-is. */
+  --text-caption: 0.75rem;   --text-caption--line-height: 1.4;
+  --text-meta: 0.8125rem;    --text-meta--line-height: 1.4;
+  --text-sm: 0.875rem;       --text-sm--line-height: 1.45;
+  --text-base: 0.9375rem;    --text-base--line-height: 1.6;
+  --text-lg: 1.125rem;       --text-lg--line-height: 1.55;
+  --text-xl: 1.5rem;         --text-xl--line-height: 1.25;
+  --text-2xl: 2rem;          --text-2xl--line-height: 1.15;
+  --text-3xl: 2.75rem;       --text-3xl--line-height: 1.08;
+  --text-display: 3.5rem;    --text-display--line-height: 1.05;
+  --text-hero: clamp(2.75rem, 6vw, 5rem);
+  --text-page-title: clamp(2.25rem, 4.6vw, 3.5rem);
+  --hero-line-height: 1.02;
+  --tracking-tight: -0.03em;
+  --tracking-heading: -0.02em;
+  --tracking-label: 0.08em;
+
+  /* Interaction */
+  --press-scale: 0.97;
+  --hover-rise: -0.125rem;
+
+  /* Focus ring: the accent, nothing else */
+  --focus-ring: var(--accent);
+
+  /* ELEVATION. A 1px ring (--ring-tint) plus a soft drop (--shadow-tint), never a border.
+     These, --knob-lo and --edge-hi MUST be re-declared per scheme: the alphas differ.
+     Light scheme (default, applies when nothing else matches): */
+  --shadow-card: 0 0 0 1px rgb(var(--ring-tint) / 0.07), 0 1px 2px rgb(var(--shadow-tint) / 0.04);
+  --shadow-float: 0 0 0 1px rgb(var(--ring-tint) / 0.06), 0 4px 14px rgb(var(--shadow-tint) / 0.07);
+  --shadow-overlay: 0 0 0 1px rgb(var(--ring-tint) / 0.06), 0 18px 44px rgb(var(--shadow-tint) / 0.16);
+  /* Slider-knob depth for raised controls: lit top edge, faint shaded bottom edge */
+  --knob-hi: inset 0 1px 0 rgb(var(--highlight-tint) / 0.22);
+  --knob-lo: inset 0 -1px 0 rgb(var(--shadow-tint) / 0.2);
+  --edge-hi: inset 0 1px 0 rgb(var(--highlight-tint) / 0.9);
+}
+
+/* Dark scheme alphas: edge-hi .07, knob-lo .14, ring .07-.08, stronger drops (.45-.55). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --shadow-card: 0 0 0 1px rgb(var(--ring-tint) / 0.07);
+    --shadow-float: 0 0 0 1px rgb(var(--ring-tint) / 0.08), 0 6px 18px rgb(var(--shadow-tint) / 0.45);
+    --shadow-overlay: 0 0 0 1px rgb(var(--ring-tint) / 0.08), 0 18px 44px rgb(var(--shadow-tint) / 0.55);
+    --knob-lo: inset 0 -1px 0 rgb(var(--shadow-tint) / 0.14);
+    --edge-hi: inset 0 1px 0 rgb(var(--highlight-tint) / 0.07);
+  }
+}
+:root[data-theme='dark'] {
+  --shadow-card: 0 0 0 1px rgb(var(--ring-tint) / 0.07);
+  --shadow-float: 0 0 0 1px rgb(var(--ring-tint) / 0.08), 0 6px 18px rgb(var(--shadow-tint) / 0.45);
+  --shadow-overlay: 0 0 0 1px rgb(var(--ring-tint) / 0.08), 0 18px 44px rgb(var(--shadow-tint) / 0.55);
+  --knob-lo: inset 0 -1px 0 rgb(var(--shadow-tint) / 0.14);
+  --edge-hi: inset 0 1px 0 rgb(var(--highlight-tint) / 0.07);
+}
+
+/* Reset + base. Layered so utilities and components can override it. Needs transitions.css
+   for --duration-quick / --ease-smooth-out. Tailwind preflight already supplies the reset
+   lines; keep them anyway if you are not sure (they are harmless there). */
+@layer base {
+  *, ::before, ::after { box-sizing: border-box; }
+  button { border: 0; background: none; font: inherit; color: inherit; padding: 0; }
+  dialog { border: 0; }
+
+  html { font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; scroll-padding-top: 7rem; }
+  body { background: var(--frame); color: var(--text); font-family: var(--font-sans); font-size: 0.9375rem; line-height: 1.6; letter-spacing: -0.009em; }
+  h1, h2, h3 { text-wrap: balance; letter-spacing: var(--tracking-heading); color: var(--ink); }
+  p { text-wrap: pretty; }
+  main { overflow-wrap: anywhere; }
+  main :focus-visible { scroll-margin-block: 7rem 2rem; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  button { cursor: pointer; }
+  ::selection { background: var(--accent); color: var(--frame); }
+
+  /* Calm ring with a gap. Keyboard focus only; it opens out from the edge in 150ms. */
+  :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; animation: focus-ring-in var(--duration-quick) var(--ease-smooth-out); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    :focus-visible { animation: none; }
+  }
+}
+@keyframes focus-ring-in { from { outline-color: transparent; outline-offset: 0; } }
+
+@layer components {
+  /* Mono eyebrow / date label */
+  .eyebrow { font-family: var(--font-mono); font-size: var(--text-caption); font-variant-numeric: tabular-nums; letter-spacing: var(--tracking-label); text-transform: uppercase; color: var(--text-tertiary); }
+
+  /* Surfaces */
+  .sheet { background: var(--sheet); border-radius: var(--r-lg); box-shadow: var(--shadow-float); }
+  .image-edge { outline: 1px solid var(--outline-image); outline-offset: -1px; }
+
+  /* Dialog stage: centers content inside a full-viewport <dialog>. The stage ignores
+     pointer events so a click on the padding reaches the <dialog> (click-outside-to-close);
+     its direct children take them back. */
+  .dialog-stage { pointer-events: none; display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; }
+  .dialog-stage > * { pointer-events: auto; }
+}
+
+/* Tailwind v4 only: to get utilities (bg-veil, text-ink, rounded-card ...), add this to
+ * your @theme block alongside the --font-* and --text-* tokens above:
+ *
+ * @theme {
+ *   --color-canvas: var(--frame);
+ *   --color-veil: var(--sheet);
+ *   --color-inset: var(--fill);
+ *   --color-ink: var(--ink);
+ *   --color-ink-muted: var(--text-secondary);
+ *   --color-ink-faint: var(--text-tertiary);
+ *   --color-hairline: var(--hairline);
+ *   --color-accent: var(--accent);
+ *   --color-scrim: var(--scrim);
+ *   --radius-control: var(--r-md);
+ *   --radius-card: var(--r-lg);
+ *   --radius-panel: var(--r-xl);
+ *   --radius-pill: 999px;
+ * }
+ */

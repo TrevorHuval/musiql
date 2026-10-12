@@ -1,226 +1,118 @@
 .page {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 40px 24px 64px;
+  padding-bottom: var(--space-section);
 }
 
-.head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 28px;
+.lead {
+  max-width: 65ch;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 
-.title {
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.subtitle {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: var(--paper-2);
-  max-width: 460px;
+.body {
+  padding-top: var(--space-xl);
 }
 
 .centered {
   display: flex;
   justify-content: center;
-  padding: 60px 0;
+  padding: var(--space-section) 0;
 }
 
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  background: var(--panel);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-lg);
 }
 
-.list > li + li .row {
-  border-top: 1px solid var(--line);
-}
-
-.row {
+.item {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 18px;
-  transition: background-color 130ms var(--ease-out);
+  min-width: 0;
 }
 
-.row:hover {
-  background: color-mix(in srgb, var(--panel) 60%, var(--paper) 4%);
-}
-
-.rowMain {
+.item > * {
   flex: 1;
   min-width: 0;
-  text-decoration: none;
-  color: inherit;
 }
 
-.rowText {
+.cardMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
   min-width: 0;
+  color: inherit;
+  text-decoration: none;
 }
 
-.rowTitleLine {
+.cardTitleLine {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 10px;
+  gap: var(--space-xs) var(--space-sm);
 }
 
-.rowName {
-  font-size: 15.5px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--paper);
+.cardName {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.rowDesc {
-  margin: 3px 0 0;
-  font-size: 13px;
-  color: var(--paper-2);
+.cardDesc {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.rowMql {
+.cardMql {
   display: block;
-  margin-top: 8px;
+  margin-top: var(--space-xs);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.4;
-  color: var(--paper-3);
+  color: var(--text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
 }
 
-.rowMeta {
+.cardFooter {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  margin-top: auto;
 }
 
-.rowTime {
-  font-size: 12px;
-  color: var(--paper-4);
+.cardTime {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.rowActions {
+.cardActions {
   display: flex;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity 130ms var(--ease-out);
-}
-
-.row:hover .rowActions,
-.row:focus-within .rowActions {
-  opacity: 1;
+  flex-shrink: 0;
+  gap: var(--space-xs);
 }
 
 .empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 12px;
-  padding: 72px 24px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--panel);
-}
-
-.emptyMark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  color: var(--signal);
-  background: var(--signal-bg);
-  border: 1px solid var(--signal-line);
-  margin-bottom: 4px;
-}
-
-.emptyTitle {
-  font-size: 19px;
-  font-weight: 600;
+  align-items: flex-start;
+  max-width: 36rem;
 }
 
 .emptyText {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--paper-2);
-  max-width: 400px;
 }
 
-.empty button {
-  margin-top: 8px;
-}
-
-@media (max-width: 560px) {
-  .page {
-    padding: 24px 16px 48px;
-  }
-
-  .head {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-
-  .title {
-    font-size: 24px;
-  }
-
-  .row {
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: 8px 12px;
-    padding: 14px 14px 8px;
-  }
-
-  .rowMain {
-    flex: 1 1 100%;
-  }
-
-  .rowMeta {
-    flex: 1 1 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .rowTime {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .rowActions {
-    opacity: 1;
-    gap: 4px;
-  }
-
-  .empty {
-    padding: 48px 20px;
+@media (max-width: 640px) {
+  .card {
+    padding: var(--space-md);
+    gap: var(--space-md);
   }
 }

@@ -1,95 +1,99 @@
 .body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 4px;
+  gap: var(--space-md);
+  margin-top: var(--space-unit);
 }
 
 .center {
   display: flex;
   justify-content: center;
-  padding: 28px 0;
+  padding: var(--space-xl) 0;
 }
 
 .lead {
   overflow-wrap: anywhere;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--paper-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .note {
   overflow-wrap: anywhere;
-  font-size: 12.5px;
+  font-size: var(--text-meta);
   line-height: 1.5;
-  color: var(--paper-3);
+  color: var(--text-tertiary);
 }
 
 .progress {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 28px 0 20px;
+  gap: var(--space-sm);
+  padding: var(--space-xl) 0 var(--space-lg);
   text-align: center;
 }
 
 .progressText {
   overflow-wrap: anywhere;
-  font-size: 14px;
-  color: var(--paper);
+  font-size: var(--text-sm);
+  color: var(--text);
 }
 
 .progressHint {
-  font-size: 12.5px;
-  color: var(--paper-4);
+  font-size: var(--text-meta);
+  color: var(--text-tertiary);
 }
 
 .summary {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 12px 0 6px;
+  gap: var(--space-unit);
+  padding: var(--space-sm) 0 var(--space-xs);
 }
 
 .summaryCount {
   font-family: var(--font-mono);
-  font-size: 40px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--signal-hi);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-heading);
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
 .summaryTotal {
-  color: var(--paper-4);
+  color: var(--text-tertiary);
   font-weight: 400;
 }
 
 .summaryLabel {
-  font-size: 12.5px;
-  color: var(--paper-3);
+  font-size: var(--text-meta);
+  color: var(--text-secondary);
 }
 
 .unmatched {
-  border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: var(--inset);
-  overflow: hidden;
+  background: var(--fill);
+  box-shadow:
+    inset 0 1px 2px rgb(var(--shadow-tint) / 0.18),
+    0 0 0 1px var(--hairline);
+  overflow: clip;
 }
 
 .unmatchedHead {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
+  padding: var(--space-xs) var(--space-md);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .sectionLabel {
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--paper-3);
+  color: var(--text-tertiary);
 }
 
 .unmatchedList {
@@ -104,33 +108,32 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 9px 14px;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
 }
 
 .unmatchedRow + .unmatchedRow {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--hairline);
 }
 
 .unmatchedMain {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
 }
 
 .unmatchedTitle {
-  font-size: 13.5px;
+  font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--paper);
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .unmatchedMeta {
-  font-size: 12px;
-  color: var(--paper-3);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -139,8 +142,8 @@
 .unmatchedScore {
   flex-shrink: 0;
   font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--paper-4);
+  font-size: var(--text-caption);
+  color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -148,28 +151,35 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 2px;
+  gap: var(--space-sm);
+  margin-top: var(--space-unit);
 }
 
 .openLink {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: var(--r-sm);
-  font-size: 13px;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 2.5rem;
+  padding: 0 var(--space-lg);
+  border-radius: var(--r-control);
+  font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--signal-hi);
-  background: var(--signal-bg);
-  border: 1px solid var(--signal-line);
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--fill-subtle), var(--fill));
+  box-shadow: var(--edge-hi), var(--shadow-card);
   text-decoration: none;
-  transition: background-color 120ms var(--ease-out);
+  transition:
+    transform var(--duration-micro) var(--ease-smooth-out),
+    filter var(--duration-quick) var(--ease-smooth-out);
 }
 
 .openLink:hover {
-  background: color-mix(in srgb, var(--signal-bg) 70%, var(--signal) 14%);
+  filter: brightness(1.12);
+}
+
+.openLink:active {
+  transform: scale(var(--press-scale));
 }
 
 .actions .openLink {
@@ -177,71 +187,77 @@
 }
 
 .inlineLink {
-  color: var(--signal-hi);
-  text-decoration: none;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
   overflow-wrap: anywhere;
+  transition: text-decoration-color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .inlineLink:hover {
-  text-decoration: underline;
+  text-decoration-color: var(--ink);
 }
 
-/* Keep-live row: an inset strip like the MQL readout. The amber edge appears
-   only while it is on, echoing the live pill. */
 .keepLive {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 14px;
-  background: var(--inset);
-  border: 1px solid var(--line);
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--fill);
   border-radius: var(--r-md);
-  transition: border-color 160ms var(--ease-out);
-}
-
-.keepLive[data-on] {
-  border-color: var(--signal-line);
+  box-shadow:
+    inset 0 1px 2px rgb(var(--shadow-tint) / 0.18),
+    0 0 0 1px var(--hairline);
 }
 
 .keepLiveText {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--space-unit);
   min-width: 0;
 }
 
 .keepLiveTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   overflow-wrap: anywhere;
-  font-size: 13.5px;
+  font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--paper);
+  color: var(--ink);
+}
+
+.keepLive[data-on] .keepLiveTitle::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-control);
+  background: var(--accent);
 }
 
 .keepLiveMeta {
   overflow-wrap: anywhere;
   font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--paper-3);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
 }
 
 @media (max-width: 640px) {
-  /* Stack the dialog actions full width, primary first, so long labels and
-     three-button rows never squeeze each other. */
   .actions {
     flex-direction: column-reverse;
     align-items: stretch;
-    gap: 8px;
+    gap: var(--space-xs);
   }
 
   .openLink,
   .actions .openLink {
-    justify-content: center;
-    height: 44px;
+    min-height: var(--control-height);
     margin-right: 0;
   }
 
-  /* Inline link inside a sentence: grow the hit area without moving the text. */
   .inlineLink {
     display: inline-block;
     padding: 11px 0;
@@ -249,12 +265,23 @@
   }
 
   .keepLive {
-    gap: 12px;
-    padding: 12px;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
   }
 
   .unmatchedRow {
-    gap: 8px;
-    padding: 9px 12px;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .openLink,
+  .inlineLink {
+    transition: none;
+  }
+
+  .openLink:active {
+    transform: none;
   }
 }

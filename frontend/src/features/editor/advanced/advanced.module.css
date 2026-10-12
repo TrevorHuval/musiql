@@ -1,37 +1,39 @@
 .panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 18px;
+  gap: var(--space-md);
   align-items: start;
 }
 
 .main {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .editor {
   position: relative;
   min-height: 150px;
-  border: 1px solid var(--line-2);
   border-radius: var(--r-md);
-  background: var(--inset);
-  overflow: hidden;
+  background: var(--fill);
+  box-shadow:
+    inset 0 1px 2px rgb(var(--shadow-tint) / 0.18),
+    0 0 0 1px var(--hairline);
+  overflow: clip;
 }
 
-.editor:focus-within {
-  border-color: var(--signal-line);
-  box-shadow: 0 0 0 3px var(--signal-bg);
+.editor:has(.textarea:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
 }
 
 .highlight,
 .squiggleLayer,
 .textarea {
   margin: 0;
-  padding: 14px 16px;
+  padding: var(--space-md);
   font-family: var(--font-mono);
-  font-size: 13.5px;
+  font-size: var(--text-sm);
   line-height: 1.7;
   letter-spacing: 0;
   white-space: pre-wrap;
@@ -47,7 +49,7 @@
   inset: 0;
   pointer-events: none;
   overflow: auto;
-  color: var(--paper);
+  color: var(--text);
 }
 
 .squiggleLayer {
@@ -62,16 +64,17 @@
   resize: vertical;
   background: transparent;
   color: transparent;
-  caret-color: var(--paper);
+  caret-color: var(--ink);
   outline: none;
 }
 
 .textarea::selection {
-  background: var(--signal-bg);
+  background: var(--accent);
+  color: var(--frame);
 }
 
 .squiggle {
-  border-bottom: 2px wavy var(--clay);
+  border-bottom: 2px wavy var(--danger);
   padding-bottom: 1px;
 }
 
@@ -101,7 +104,7 @@
 }
 
 .plain {
-  color: var(--paper);
+  color: var(--text);
 }
 
 .errorList {
@@ -110,46 +113,47 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 
 .errorItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 11px;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--r-sm);
-  background: var(--clay-bg);
-  border: 1px solid var(--clay-line);
-  font-size: 13px;
+  background: var(--danger-bg);
+  box-shadow: 0 0 0 1px var(--danger-line);
+  font-size: var(--text-meta);
 }
 
 .errorIcon {
-  color: var(--clay-hi);
+  color: var(--danger-hi);
   flex-shrink: 0;
 }
 
 .errorMessage {
   flex: 1;
   min-width: 0;
-  color: var(--paper);
+  color: var(--text);
   overflow-wrap: anywhere;
 }
 
 .errorPos {
   font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--clay-hi);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--danger-hi);
   flex-shrink: 0;
 }
 
 .cheat {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--panel);
-  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--sheet);
+  box-shadow: var(--shadow-float);
+  overflow: clip;
 }
 
 .cheatHead {
@@ -157,15 +161,14 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 13px;
+  min-height: 2.5rem;
+  padding: var(--space-xs) var(--space-md);
   background: transparent;
   border: 0;
-  border-top: 1px solid var(--line);
-  color: var(--paper);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  border-top: 1px solid var(--hairline);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -173,9 +176,13 @@
   border-top: 0;
 }
 
+.cheatHead:focus-visible {
+  outline-offset: -2px;
+}
+
 .cheatChevron {
-  color: var(--paper-4);
-  transition: transform 160ms var(--ease-out);
+  color: var(--text-tertiary);
+  transition: transform var(--duration-quick) var(--ease-smooth-out);
 }
 
 .cheatHead[data-open] .cheatChevron {
@@ -183,79 +190,83 @@
 }
 
 .cheatPanel {
-  padding: 2px 13px 14px;
+  padding: var(--space-unit) var(--space-md) var(--space-md);
 }
 
 .cheatShape {
-  margin: 0 0 8px;
-  padding: 10px 12px;
-  background: var(--inset);
+  margin: 0 0 var(--space-xs);
+  padding: var(--space-sm);
+  background: var(--fill);
   border-radius: var(--r-sm);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.6;
-  color: var(--paper-2);
+  color: var(--text-secondary);
   white-space: pre-wrap;
 }
 
 .cheatNote {
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: 12.5px;
+  font-size: var(--text-meta);
   line-height: 1.55;
-  color: var(--paper-2);
+  color: var(--text-secondary);
 }
 
 .cheatNote code {
   font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--signal-hi);
+  font-size: var(--text-caption);
+  color: var(--ink);
 }
 
 .cheatList {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: var(--space-xs);
 }
 
 .cheatItem dt {
   overflow-wrap: anywhere;
   font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--paper);
+  font-size: var(--text-caption);
+  color: var(--ink);
 }
 
 .cheatItem dd {
   margin: 2px 0 0;
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.45;
-  color: var(--paper-3);
+  color: var(--text-secondary);
 }
 
 .cheatExamples {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: var(--space-xs);
 }
 
 .cheatExample {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-xs);
   text-align: left;
-  padding: 9px 10px;
+  padding: var(--space-xs) var(--space-sm);
   border-radius: var(--r-sm);
-  border: 1px solid var(--line);
-  background: var(--inset);
+  background: var(--fill);
+  box-shadow: var(--shadow-card);
   cursor: pointer;
   transition:
-    border-color 120ms var(--ease-out),
-    background-color 120ms var(--ease-out);
+    transform var(--duration-micro) var(--ease-smooth-out),
+    filter var(--duration-quick) var(--ease-smooth-out);
 }
 
 .cheatExample:hover {
-  border-color: var(--signal-line);
+  filter: brightness(1.12);
+}
+
+.cheatExample:active {
+  transform: scale(var(--press-scale));
 }
 
 .cheatExample code {
@@ -263,18 +274,19 @@
   min-width: 0;
   overflow-wrap: anywhere;
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: var(--text-caption);
   line-height: 1.45;
-  color: var(--paper-2);
+  color: var(--text-secondary);
 }
 
 .cheatExampleAdd {
   flex-shrink: 0;
-  color: var(--paper-4);
+  color: var(--text-tertiary);
+  transition: color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .cheatExample:hover .cheatExampleAdd {
-  color: var(--signal-hi);
+  color: var(--ink);
 }
 
 @media (max-width: 900px) {
@@ -284,13 +296,11 @@
 }
 
 @media (max-width: 640px) {
-  /* 16px stops iOS zooming into the textarea; the highlight and squiggle
-     layers must match it exactly or the overlay drifts off the text. */
   .highlight,
   .squiggleLayer,
   .textarea {
-    padding: 12px;
-    font-size: 16px;
+    padding: var(--space-sm);
+    font-size: var(--text-lg);
     line-height: 1.6;
   }
 
@@ -301,7 +311,6 @@
 
   .errorItem {
     align-items: flex-start;
-    padding: 8px 10px;
   }
 
   .errorIcon {
@@ -309,10 +318,22 @@
   }
 
   .cheatHead {
-    min-height: 44px;
+    min-height: var(--control-height);
   }
 
   .cheatExample {
-    min-height: 44px;
+    min-height: var(--control-height);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cheatChevron,
+  .cheatExample,
+  .cheatExampleAdd {
+    transition: none;
+  }
+
+  .cheatExample:active {
+    transform: none;
   }
 }

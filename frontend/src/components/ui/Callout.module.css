@@ -1,46 +1,32 @@
 .callout {
+  --tone: var(--text-secondary);
+  --tone-title: var(--ink);
   display: flex;
-  gap: 11px;
-  padding: 12px 14px;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--r-md);
-  border: 1px solid var(--line-2);
-  background: var(--panel);
+  background: var(--sheet);
+  box-shadow: var(--shadow-float);
 }
 
 .callout[data-tone='clay'] {
-  border-color: var(--clay-line);
-  background: var(--clay-bg);
+  --tone: var(--danger-hi);
+  --tone-title: var(--danger-hi);
 }
 
 .callout[data-tone='signal'] {
-  border-color: var(--signal-line);
-  background: var(--signal-bg);
+  --tone: var(--ink);
 }
 
 .callout[data-tone='valid'] {
-  border-color: color-mix(in srgb, var(--valid) 40%, transparent);
-  background: var(--valid-bg);
+  --tone: var(--success-hi);
+  --tone-title: var(--success-hi);
 }
 
 .icon {
   flex-shrink: 0;
   margin-top: 1px;
-}
-
-.callout[data-tone='clay'] .icon {
-  color: var(--clay-hi);
-}
-
-.callout[data-tone='signal'] .icon {
-  color: var(--signal-hi);
-}
-
-.callout[data-tone='neutral'] .icon {
-  color: var(--paper-3);
-}
-
-.callout[data-tone='valid'] .icon {
-  color: var(--valid-hi);
+  color: var(--tone);
 }
 
 .body {
@@ -51,24 +37,17 @@
 
 .title {
   margin: 0;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--paper);
+  font-size: var(--text-meta);
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--tone-title);
 }
 
 .text {
   margin-top: 3px;
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1.5;
-  color: var(--paper-2);
-}
-
-.callout[data-tone='clay'] .title {
-  color: var(--clay-hi);
-}
-
-.callout[data-tone='valid'] .title {
-  color: var(--valid-hi);
+  color: var(--text-secondary);
 }
 
 .action {

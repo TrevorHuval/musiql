@@ -12,45 +12,45 @@ export function SettingsPage() {
 
   return (
     <div className={styles.page}>
-      <header className={styles.head}>
-        <div>
-          <h1 className={styles.title}>Settings</h1>
-          <p className={styles.subtitle}>Connect Spotify to export playlists and sync your library.</p>
-        </div>
+      <header className="page-heading">
+        <h1>Settings</h1>
+        <p className={styles.lead}>Connect Spotify to export playlists and sync your library.</p>
       </header>
 
-      <section className={styles.card}>
-        <div className={styles.cardHead}>
-          <span className={styles.mark} aria-hidden="true">
-            <Icon name="link" size={18} />
-          </span>
-          <div className={styles.cardHeadText}>
-            <h2 className={styles.cardTitle}>Spotify</h2>
-            <p className={styles.cardMeta}>Playlist export and saved-track sync</p>
+      <div className={styles.body}>
+        <section className={`card ${styles.card}`}>
+          <div className={styles.cardHead}>
+            <span className={styles.mark} aria-hidden="true">
+              <Icon name="link" size={18} />
+            </span>
+            <div className={styles.cardHeadText}>
+              <h2 className="card-title">Spotify</h2>
+              <p className={`eyebrow ${styles.cardMeta}`}>Playlist export and saved-track sync</p>
+            </div>
+            {status.data?.connected && <Pill tone="valid">Connected</Pill>}
           </div>
-          {status.data?.connected && <Pill tone="valid">Connected</Pill>}
-        </div>
 
-        {status.isPending ? (
-          <div className={styles.loading}>
-            <Spinner />
-          </div>
-        ) : status.isError ? (
-          <Callout tone="clay" icon="x" title="Couldn’t load Spotify status">
-            {problemToMessage(status.error)}
-          </Callout>
-        ) : status.data?.connected ? (
-          <ConnectedPanel
-            displayName={status.data.displayName}
-            connectedAt={status.data.connectedAt}
-            librarySyncedAt={status.data.librarySyncedAt}
-            savedCount={status.data.librarySavedCount}
-            matchedCount={status.data.libraryMatchedCount}
-          />
-        ) : (
-          <DisconnectedPanel />
-        )}
-      </section>
+          {status.isPending ? (
+            <div className={styles.loading}>
+              <Spinner />
+            </div>
+          ) : status.isError ? (
+            <Callout tone="clay" icon="x" title="Couldn’t load Spotify status">
+              {problemToMessage(status.error)}
+            </Callout>
+          ) : status.data?.connected ? (
+            <ConnectedPanel
+              displayName={status.data.displayName}
+              connectedAt={status.data.connectedAt}
+              librarySyncedAt={status.data.librarySyncedAt}
+              savedCount={status.data.librarySavedCount}
+              matchedCount={status.data.libraryMatchedCount}
+            />
+          ) : (
+            <DisconnectedPanel />
+          )}
+        </section>
+      </div>
     </div>
   )
 }
@@ -63,7 +63,7 @@ function DisconnectedPanel() {
 
   return (
     <div className={styles.panel}>
-      <p className={styles.lead}>
+      <p className={styles.lead2}>
         Link your Spotify account to push MusiQL playlists to Spotify and to fill{' '}
         <span className={styles.mono}>from library</span> queries with your saved tracks.
       </p>
@@ -105,7 +105,7 @@ function ConnectedPanel({
         <div>
           <p className={styles.accountName}>{displayName ?? 'Spotify account'}</p>
           {connectedAt && (
-            <p className={styles.accountMeta}>Connected {formatDate(connectedAt)}</p>
+            <p className={`eyebrow ${styles.accountMeta}`}>Connected {formatDate(connectedAt)}</p>
           )}
         </div>
         <Button
@@ -120,7 +120,7 @@ function ConnectedPanel({
 
       <div className={styles.syncBlock}>
         <div className={styles.syncHead}>
-          <span className={styles.sectionLabel}>Library sync</span>
+          <span className="eyebrow">Library sync</span>
           <Button
             variant="secondary"
             size="sm"
@@ -169,5 +169,9 @@ function formatDate(value: string): string {
   if (Number.isNaN(date.getTime())) {
     return ''
   }
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }

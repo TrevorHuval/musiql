@@ -1,17 +1,15 @@
 .page {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 22px 24px 72px;
+  padding-block: var(--space-lg) var(--space-2xl);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .loading,
 .errorState {
   max-width: 760px;
   margin: 0 auto;
-  padding: 80px 24px;
+  padding-block: 80px;
   display: flex;
   justify-content: center;
 }
@@ -20,14 +18,14 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-md);
   flex-wrap: wrap;
 }
 
 .toolbarLeft {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: var(--space-sm);
   min-width: 0;
 }
 
@@ -36,22 +34,32 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin-top: 2px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line-2);
-  color: var(--paper-2);
-  background: var(--panel);
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  margin-top: var(--space-unit);
+  border-radius: var(--r-control);
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--fill-subtle), var(--fill));
+  box-shadow: var(--edge-hi), var(--shadow-card);
   text-decoration: none;
   transition:
-    color 120ms var(--ease-out),
-    border-color 120ms var(--ease-out);
+    transform var(--duration-micro) var(--ease-smooth-out),
+    filter var(--duration-quick) var(--ease-smooth-out);
+}
+
+.back::before {
+  content: '';
+  position: absolute;
+  inset: -0.25rem;
 }
 
 .back:hover {
-  color: var(--paper);
-  border-color: var(--line-3);
+  filter: brightness(1.12);
+}
+
+.back:active {
+  transform: scale(var(--press-scale));
 }
 
 .backIcon {
@@ -62,84 +70,88 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 7px;
+  gap: var(--space-xs);
   min-width: 0;
 }
 
 .titleLine {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-unit);
   min-width: 0;
   max-width: 100%;
 }
 
 .title {
   min-width: 0;
-  font-size: 21px;
+  font-size: var(--text-xl);
+  line-height: 1.25;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-heading);
+  color: var(--ink);
   overflow-wrap: anywhere;
 }
 
 .toolbarRight {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .exportLabel {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 
 .switchNote {
-  margin-top: -2px;
   overflow-wrap: anywhere;
 }
 
 .deck {
-  padding: 20px;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  padding: var(--space-lg);
+  background: var(--sheet);
   border-radius: var(--r-lg);
+  box-shadow: var(--shadow-float);
 }
 
 .readout {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-sm);
   width: 100%;
   text-align: left;
-  padding: 12px 16px;
-  background: var(--inset);
-  border: 1px solid var(--line);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--fill);
   border-radius: var(--r-md);
+  box-shadow:
+    inset 0 1px 2px rgb(var(--shadow-tint) / 0.18),
+    0 0 0 1px var(--hairline);
   cursor: pointer;
-  transition: border-color 130ms var(--ease-out);
+  transition: filter var(--duration-quick) var(--ease-smooth-out);
 }
 
 .readout:hover {
-  border-color: var(--signal-line);
+  filter: brightness(1.12);
 }
 
 .readoutLabel {
   flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--paper-4);
-  padding-top: 1px;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
 }
 
 .readoutText {
   flex: 1;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1.5;
-  color: var(--paper);
+  color: var(--text);
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -148,14 +160,15 @@
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  color: var(--paper-4);
+  gap: var(--space-unit);
+  font-size: var(--text-caption);
+  color: var(--text-tertiary);
   opacity: 0;
-  transition: opacity 130ms var(--ease-out);
+  transition: opacity var(--duration-quick) var(--ease-smooth-out);
 }
 
-.readout:hover .readoutHint {
+.readout:hover .readoutHint,
+.readout:focus-visible .readoutHint {
   opacity: 1;
 }
 
@@ -167,14 +180,14 @@
 
 @media (max-width: 640px) {
   .page {
-    padding: 16px 16px 56px;
-    gap: 14px;
+    padding-block: var(--space-md) var(--space-2xl);
+    gap: var(--space-sm);
   }
 
   .toolbar {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: var(--space-sm);
   }
 
   .toolbarLeft {
@@ -182,40 +195,50 @@
   }
 
   .back {
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
     margin-top: 0;
   }
 
   .title {
-    font-size: 18px;
-    line-height: 1.25;
+    font-size: var(--text-lg);
+    line-height: 1.3;
   }
 
-  /* The rename pencil sits at the end of the (possibly multi-line) title. */
   .titleLine > button {
     flex-shrink: 0;
-    width: 40px;
+    width: 2.5rem;
   }
 
   .toolbarRight {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-xs);
   }
 
-  /* Save takes the leftover width so the row never ends in a stub. */
   .toolbarRight > :last-child {
     flex: 1 1 auto;
     min-width: 132px;
   }
 
   .deck {
-    padding: 14px;
+    padding: var(--space-md);
   }
 
   .readout {
     align-items: flex-start;
-    padding: 12px;
-    gap: 10px;
+    padding: var(--space-sm);
+    gap: var(--space-xs);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back,
+  .readout,
+  .readoutHint {
+    transition: none;
+  }
+
+  .back:active {
+    transform: none;
   }
 }

@@ -1,37 +1,26 @@
 .control {
   width: 100%;
-  height: 36px;
-  padding: 0 11px;
-  background: var(--inset);
-  color: var(--paper);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
-  font-size: 14px;
-  transition:
-    border-color 130ms var(--ease-out),
-    box-shadow 130ms var(--ease-out);
+  min-height: var(--control-height);
+  padding: 0 var(--space-md);
+  background: var(--fill);
+  color: var(--text);
+  border: 0;
+  border-radius: var(--r-control);
+  box-shadow: inset 0 1px 2px rgb(var(--shadow-tint) / 0.18), 0 0 0 1px var(--hairline);
+  font-size: var(--text-sm);
+  transition: filter var(--duration-quick) var(--ease-smooth-out);
 }
 
 .control::placeholder {
-  color: var(--paper-4);
+  color: var(--text-tertiary);
 }
 
 .control:hover:not(:focus) {
-  border-color: var(--line-3);
-}
-
-.control:focus {
-  outline: none;
-  border-color: var(--signal-line);
-  box-shadow: 0 0 0 3px var(--signal-bg);
+  filter: brightness(1.12);
 }
 
 .control[data-invalid] {
-  border-color: var(--clay-line);
-}
-
-.control[data-invalid]:focus {
-  box-shadow: 0 0 0 3px var(--clay-bg);
+  box-shadow: inset 0 1px 2px rgb(var(--shadow-tint) / 0.18), 0 0 0 1px var(--danger-line);
 }
 
 .field {
@@ -42,28 +31,26 @@
 }
 
 .label {
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 500;
-  color: var(--paper-2);
-  letter-spacing: 0.01em;
+  color: var(--text-secondary);
 }
 
 .hint {
-  font-size: 12px;
-  color: var(--paper-3);
+  font-size: var(--text-caption);
+  color: var(--text-tertiary);
   overflow-wrap: anywhere;
 }
 
 .error {
-  font-size: 12px;
-  color: var(--clay-hi);
+  font-size: var(--text-caption);
+  color: var(--danger-hi);
   overflow-wrap: anywhere;
 }
 
-/* 16px stops iOS Safari zooming the page on focus; 44px is a comfortable tap target. */
-@media (max-width: 640px) {
+/* 16px stops iOS Safari zooming the page on focus. */
+@media (max-width: 639px) {
   .control {
-    height: 44px;
-    font-size: 16px;
+    font-size: 1rem;
   }
 }

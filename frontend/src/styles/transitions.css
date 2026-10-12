@@ -1,0 +1,107 @@
+/* site-design: motion tokens and reusable recipes.
+ *
+ * Rules: animate only opacity, transform, filter (and grid-template-rows for height).
+ * Nothing plays on mount or load: every recipe is a state change the user triggers by
+ * toggling a class or attribute. Closing is never slower than opening. Reduced motion
+ * jumps to the final state.
+ *
+ * The recipes live in `@layer components` on purpose. Unlayered CSS beats every layer,
+ * including Tailwind utilities, so never paste these rules outside the layer.
+ * (Plain CSS: declare `@layer base, components;` once, first, as tokens.css does.)
+ */
+
+:root {
+  /* Durations */
+  --duration-stagger: 40ms;
+  --duration-micro: 80ms;
+  --duration-quick: 150ms;
+  --duration-fast: 250ms;
+  --duration-medium: 350ms;
+  --duration-slow: 400ms;
+  --duration-very-slow: 500ms;
+  /* Easings */
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: ease-in-out;
+  --ease-out: ease-out;
+  --ease-linear: linear;
+  --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);        /* rare moments only */
+  --ease-bounce-strong: cubic-bezier(0.34, 3.85, 0.64, 1); /* rare moments only */
+  /* Distances, scales, blur */
+  --distance-micro: 4px;
+  --distance-base: 8px;
+  --scale-large: 0.96;
+  --scale-medium: 0.97;
+  --scale-tiny: 0.99;
+  --blur-small: 2px;
+  --press-scale: 0.97;
+  --hover-rise: -0.125rem;
+  /* Recipe variables */
+  --dialog-open-dur: 200ms;
+  --dialog-close-dur: 150ms;
+  --menu-open-dur: 250ms;
+  --menu-close-dur: 150ms;
+  --seg-dur: 250ms;
+}
+
+/* Keyframes stay outside the layer. */
+@keyframes dissolve-in { from { opacity: 0; transform: scale(var(--scale-medium)); } to { opacity: 1; transform: none; } }
+@keyframes dissolve-out { from { opacity: 1; } to { opacity: 0; } }
+
+@layer components {
+  /* Press: a dip to 97% and nothing else. Add the class to any pressable. */
+  .press { transition: transform var(--duration-micro) var(--ease-smooth-out); }
+  .press:active { transform: scale(var(--press-scale)); }
+
+  /* Dissolve: toggle .is-in to fade content in place (with a 2px blur). */
+  .dissolve { opacity: 0; filter: blur(var(--blur-small)); transition: opacity var(--duration-quick) var(--ease-in-out), filter var(--duration-quick) var(--ease-in-out); }
+  .dissolve.is-in { opacity: 1; filter: none; }
+
+  /* Dialog (native <dialog>): toggle .is-open to open, .is-closing for the shorter exit. */
+  .dialog-motion { opacity: 0; transform: scale(var(--scale-large)); transition: opacity var(--dialog-close-dur) var(--ease-smooth-out), transform var(--dialog-close-dur) var(--ease-smooth-out); }
+  .dialog-motion.is-open { opacity: 1; transform: scale(1); transition-duration: var(--dialog-open-dur); }
+  .dialog-motion.is-closing { opacity: 0; transform: scale(var(--scale-large)); transition-duration: var(--dialog-close-dur); }
+  .dialog-motion::backdrop { opacity: 0; transition: opacity var(--dialog-close-dur) var(--ease-smooth-out); }
+  .dialog-motion.is-open::backdrop { opacity: 1; transition-duration: var(--dialog-open-dur); }
+  .dialog-motion.is-closing::backdrop { opacity: 0; }
+
+  /* Menu / popover: toggle .is-open; .is-closing is the quicker, slightly smaller exit.
+     Set data-origin to the corner nearest the trigger. */
+  .menu-motion { transform-origin: top left; transform: scale(var(--scale-medium)); opacity: 0; pointer-events: none; transition: transform var(--menu-open-dur) var(--ease-smooth-out), opacity var(--menu-open-dur) var(--ease-smooth-out); }
+  .menu-motion[data-origin='top-right'] { transform-origin: top right; }
+  .menu-motion[data-origin='bottom-left'] { transform-origin: bottom left; }
+  .menu-motion[data-origin='bottom-right'] { transform-origin: bottom right; }
+  .menu-motion.is-open { transform: scale(1); opacity: 1; pointer-events: auto; }
+  .menu-motion.is-closing { transform: scale(var(--scale-tiny)); opacity: 0; pointer-events: none; transition-duration: var(--menu-close-dur); }
+
+  /* Segmented sliding indicator. JS writes width + transform inline; data-ready is set on the
+     container after the first measurement, so the pill never slides on mount. (This is the one
+     place width is tweened too.) */
+  .segmented-pill { position: absolute; top: 3px; left: 0; width: 0; height: calc(100% - 6px); transform: translateX(0); pointer-events: none; z-index: 0; }
+  .segmented[data-ready='true'] .segmented-pill { transition: transform var(--seg-dur) var(--ease-smooth-out), width var(--seg-dur) var(--ease-smooth-out); }
+
+  /* Photo fade-in as it decodes. Set data-loaded="true" from onLoad. */
+  .photo-fade { opacity: 0; transition: opacity var(--duration-fast) var(--ease-smooth-out); }
+  .photo-fade[data-loaded='true'] { opacity: 1; }
+
+  /* Dissolve between two items (filter swap, lightbox navigation): old out 100ms, new in
+     30ms later, scaling .97 to 1 over 150ms. Put .dissolve-in on the new element. For a
+     stacked swap (lightbox), keep a ghost of the old element with .dissolve-out inside a
+     position: relative box. For a grid swap: add .is-out, swap the content, then replace
+     .is-out with .dissolve-in. Neither class exists on first render. */
+  .dissolve-in { animation: dissolve-in var(--duration-quick) var(--ease-smooth-out) 30ms backwards; }
+  .dissolve-out { position: absolute; top: 0; left: 0; width: 100%; height: auto; pointer-events: none; animation: dissolve-out 100ms var(--ease-in-out) forwards; }
+  .is-out { opacity: 0; pointer-events: none; transition: opacity 100ms var(--ease-smooth-out); }
+
+  /* Hover lift (pointer devices only; excluded while pressed so the dip is the only motion) */
+  @media (hover: hover) {
+    .lift { transition: transform var(--duration-quick) var(--ease-smooth-out); }
+    .lift:hover:not(:active) { transform: translateY(var(--hover-rise)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .press, .dissolve, .dialog-motion, .dialog-motion::backdrop, .menu-motion, .segmented-pill, .photo-fade, .lift, .is-out { transition: none !important; }
+    .dissolve-in { animation: none !important; }
+    .dissolve-out { display: none; }
+    .press:active, .lift:hover:not(:active) { transform: none; }
+  }
+}

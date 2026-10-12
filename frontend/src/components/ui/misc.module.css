@@ -1,122 +1,78 @@
 .pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 22px;
-  padding: 0 9px;
-  border-radius: var(--r-pill);
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  border: 1px solid var(--line-2);
-  color: var(--paper-2);
   flex-shrink: 0;
   white-space: nowrap;
+  gap: 6px;
 }
 
 .pill[data-tone='signal'] {
-  color: var(--signal-hi);
-  background: var(--signal-bg);
-  border-color: var(--signal-line);
+  color: var(--ink);
 }
 
 .pill[data-tone='clay'] {
-  color: var(--clay-hi);
-  background: var(--clay-bg);
-  border-color: var(--clay-line);
+  color: var(--danger-hi);
+  background: var(--danger-bg);
 }
 
 .pill[data-tone='valid'] {
-  color: var(--valid-hi);
-  background: var(--valid-bg);
-  border-color: color-mix(in srgb, var(--valid) 40%, transparent);
+  color: var(--success-hi);
+  background: var(--success-bg);
 }
 
 .live {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 24px;
-  padding: 0 11px;
-  border-radius: var(--r-pill);
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--signal-hi);
-  background: var(--signal-bg);
-  border: 1px solid var(--signal-line);
   flex-shrink: 0;
   white-space: nowrap;
+  gap: 7px;
 }
 
 .liveDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--signal);
-  box-shadow: 0 0 0 0 var(--signal-line);
-  animation: beacon 2s var(--ease-out) infinite;
-}
-
-@keyframes beacon {
-  0% {
-    box-shadow: 0 0 0 0 var(--signal-line);
-  }
-  70% {
-    box-shadow: 0 0 0 5px transparent;
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
+  background: var(--accent);
 }
 
 .iconButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--r-sm);
-  color: var(--paper-3);
-  background: transparent;
-  border: 1px solid transparent;
   cursor: pointer;
-  transition:
-    color 120ms var(--ease-out),
-    background-color 120ms var(--ease-out);
+  background: none;
+  box-shadow: none;
+  color: var(--text-secondary);
+  filter: none;
 }
 
 .iconButton:hover {
-  color: var(--paper);
-  background: var(--raised);
-}
-
-.iconButton:active {
-  transform: scale(0.94);
-}
-
-@media (max-width: 640px) {
-  .iconButton {
-    width: 40px;
-    height: 40px;
-  }
+  color: var(--ink);
+  background: var(--fill);
+  filter: none;
 }
 
 .iconButton[data-tone='danger']:hover {
-  color: var(--clay-hi);
-  background: var(--clay-bg);
+  color: var(--danger-hi);
+  background: var(--danger-bg);
+}
+
+@media (max-width: 639px) {
+  .iconButton {
+    min-width: 2.5rem;
+    height: 2.5rem;
+  }
 }
 
 .spinner {
   display: inline-block;
   border-radius: 50%;
-  border: 2px solid var(--line-3);
-  border-top-color: var(--signal);
-  animation: spin 640ms linear infinite;
+  border: 2px solid var(--border);
+  border-top-color: var(--ink);
+  animation: spin 640ms var(--ease-linear) infinite;
 }
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1.6s;
   }
 }

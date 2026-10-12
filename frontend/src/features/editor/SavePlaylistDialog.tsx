@@ -16,6 +16,19 @@ interface SavePlaylistDialogProps {
 }
 
 export function SavePlaylistDialog({ mql, open, onClose }: SavePlaylistDialogProps) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Save as a live playlist"
+      description="The query is stored, not the tracks. Every time you open this playlist it runs again."
+    >
+      <SaveForm mql={mql} onClose={onClose} />
+    </Dialog>
+  )
+}
+
+function SaveForm({ mql, onClose }: { mql: string; onClose: () => void }) {
   const navigate = useNavigate()
   const create = useCreatePlaylist()
   const [name, setName] = useState('')
@@ -39,12 +52,6 @@ export function SavePlaylistDialog({ mql, open, onClose }: SavePlaylistDialogPro
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title="Save as a live playlist"
-      description="The query is stored, not the tracks. Every time you open this playlist it runs again."
-    >
       <form className={dialogStyles.form} onSubmit={handleSubmit} noValidate>
         {error && <Callout tone="clay" icon="x">{error}</Callout>}
         <Field label="Name">
@@ -78,6 +85,5 @@ export function SavePlaylistDialog({ mql, open, onClose }: SavePlaylistDialogPro
           </Button>
         </div>
       </form>
-    </Dialog>
   )
 }

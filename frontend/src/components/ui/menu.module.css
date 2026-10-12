@@ -5,34 +5,25 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  height: 36px;
-  padding: 0 9px 0 11px;
-  background: var(--raised);
-  color: var(--paper);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
-  font-size: 13.5px;
+  min-height: var(--control-height);
+  padding: 0 var(--space-sm) 0 var(--space-md);
+  background: var(--fill);
+  color: var(--text);
+  border-radius: var(--r-control);
+  box-shadow: inset 0 1px 2px rgb(var(--shadow-tint) / 0.18), 0 0 0 1px var(--hairline);
+  font-size: var(--text-sm);
   font-weight: 500;
   cursor: pointer;
-  transition:
-    border-color 130ms var(--ease-out),
-    box-shadow 130ms var(--ease-out);
+  transition: filter var(--duration-quick) var(--ease-smooth-out);
 }
 
 .trigger[data-size='sm'] {
-  height: 30px;
-  font-size: 12.5px;
+  min-height: 2rem;
+  font-size: var(--text-meta);
 }
 
 .trigger:hover {
-  border-color: var(--line-3);
-}
-
-.trigger[data-open],
-.trigger:focus-visible {
-  border-color: var(--signal-line);
-  box-shadow: 0 0 0 3px var(--signal-bg);
-  outline: none;
+  filter: brightness(1.12);
 }
 
 .triggerLabel {
@@ -42,59 +33,61 @@
 }
 
 .triggerIcon {
-  color: var(--paper-3);
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
 .menu {
-  z-index: 40;
+  z-index: 70;
   min-width: min(max(var(--button-width, 0px), var(--input-width, 0px), 150px), calc(100vw - 16px));
   max-width: calc(100vw - 16px);
   max-height: min(280px, 60dvh);
-  margin-top: 5px;
-  padding: 5px;
-  background: var(--raised);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-md);
-  box-shadow: var(--shadow-pop);
+  margin-top: var(--space-unit);
+  padding: var(--space-unit);
+  background: var(--sheet);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-overlay);
   overflow: auto;
   transform-origin: top;
   transition:
-    opacity 140ms var(--ease-out),
-    transform 140ms var(--ease-out);
+    opacity var(--menu-open-dur) var(--ease-smooth-out),
+    transform var(--menu-open-dur) var(--ease-smooth-out);
 }
 
 .menu[data-closed] {
   opacity: 0;
-  transform: scale(0.97);
+  transform: scale(var(--scale-medium));
+  transition-duration: var(--menu-close-dur);
 }
 
 .option {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 7px 9px;
+  gap: var(--space-sm);
+  min-height: 2.25rem;
+  padding: var(--space-unit) var(--space-sm);
   border-radius: var(--r-sm);
-  font-size: 13.5px;
-  color: var(--paper-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   cursor: pointer;
   overflow-wrap: anywhere;
 }
 
 .option[data-focus] {
-  background: color-mix(in srgb, var(--raised) 60%, var(--paper) 8%);
-  color: var(--paper);
+  background: var(--fill);
+  color: var(--ink);
 }
 
 .option[data-selected] {
-  color: var(--paper);
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .empty {
-  padding: 10px 9px;
-  font-size: 13px;
-  color: var(--paper-3);
+  padding: var(--space-sm);
+  font-size: var(--text-meta);
+  color: var(--text-tertiary);
 }
 
 .comboWrap {
@@ -105,49 +98,42 @@
 
 .comboToggle {
   position: absolute;
-  right: 2px;
+  right: var(--space-unit);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  color: var(--paper-3);
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--text-tertiary);
   background: transparent;
-  border: none;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   cursor: pointer;
 }
 
 .comboToggle:hover {
-  color: var(--paper);
+  color: var(--ink);
 }
 
-/* Trailing row of a paged list: loading more, or the end of the list. Quiet,
-   mono, centred so it reads as list status rather than an option. */
 .listEnd {
-  padding: 8px 9px 6px;
+  padding: var(--space-xs) var(--space-sm) 6px;
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  font-size: var(--text-caption);
   text-align: center;
-  color: var(--paper-4);
+  color: var(--text-tertiary);
 }
 
-@media (max-width: 640px) {
-  .trigger {
-    height: 44px;
-  }
-
+@media (max-width: 639px) {
   .trigger[data-size='sm'] {
-    height: 40px;
+    min-height: 2.5rem;
   }
 
   .option {
-    min-height: 40px;
+    min-height: 2.5rem;
   }
+}
 
-  .comboToggle {
-    width: 40px;
-    height: 40px;
+@media (prefers-reduced-motion: reduce) {
+  .menu {
+    transition: none;
   }
 }

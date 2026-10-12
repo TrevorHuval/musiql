@@ -59,7 +59,7 @@ describe('ExportSpotifyDialog', () => {
   it('prompts to connect when Spotify is not linked', () => {
     useSpotifyLink.mockReturnValue({ data: undefined })
     useSpotifyStatus.mockReturnValue(status(false))
-    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false })
+    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), reset: vi.fn(), isPending: false, isError: false })
 
     renderDialog()
 
@@ -80,7 +80,7 @@ describe('ExportSpotifyDialog', () => {
     }
     useSpotifyLink.mockReturnValue(link())
     useSpotifyStatus.mockReturnValue(status(true))
-    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false, data: result })
+    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), reset: vi.fn(), isPending: false, isError: false, data: result })
 
     renderDialog()
 
@@ -95,7 +95,7 @@ describe('ExportSpotifyDialog', () => {
 
   it('offers keep live once exported and shows when it refreshes next', () => {
     useSpotifyStatus.mockReturnValue(status(true))
-    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false })
+    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), reset: vi.fn(), isPending: false, isError: false })
     useSpotifyLink.mockReturnValue(link())
 
     const { rerender } = renderDialog()
@@ -117,7 +117,7 @@ describe('ExportSpotifyDialog', () => {
 
   it('surfaces the last refresh failure in place of the schedule', () => {
     useSpotifyStatus.mockReturnValue(status(true))
-    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false })
+    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), reset: vi.fn(), isPending: false, isError: false })
     useSpotifyLink.mockReturnValue(
       link({ keepLive: true, lastRefreshError: 'Spotify is no longer connected. Reconnect it in settings.' }),
     )
@@ -128,7 +128,7 @@ describe('ExportSpotifyDialog', () => {
 
   it('does not offer keep live before the first export', () => {
     useSpotifyStatus.mockReturnValue(status(true))
-    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false })
+    useExportPlaylist.mockReturnValue({ mutate: vi.fn(), reset: vi.fn(), isPending: false, isError: false })
     useSpotifyLink.mockReturnValue(link({ exported: false, lastExportedAt: null }))
 
     renderDialog()

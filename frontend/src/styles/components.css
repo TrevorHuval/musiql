@@ -1,0 +1,126 @@
+@layer components {
+  .action { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--control-height); padding: var(--space-xs) var(--space-lg); border-radius: var(--r-control); font-size: 0.9375rem; line-height: 1.25; font-weight: 600; letter-spacing: -0.009em; text-decoration: none; transition: transform var(--duration-micro) var(--ease-smooth-out), filter var(--duration-quick) var(--ease-smooth-out); }
+  .action:active { transform: scale(var(--press-scale)); }
+  /* Primary uses ink, not the accent. The top of the gradient is always lit: it mixes
+     toward the highlight tint, so it also works when --ink is itself a light tone. */
+  .action-primary { color: var(--on-ink); background: linear-gradient(180deg, color-mix(in srgb, var(--ink) 88%, rgb(var(--highlight-tint))), var(--ink)); box-shadow: var(--knob-hi), var(--knob-lo), 0 1px 2px rgb(var(--shadow-tint) / 0.3), 0 0 0 1px rgb(var(--shadow-tint) / 0.25); }
+  .action-primary:hover { filter: brightness(1.08); }
+  .action-quiet { color: var(--ink); background: linear-gradient(180deg, var(--fill-subtle), var(--fill)); box-shadow: var(--edge-hi), var(--shadow-card); }
+  .action-quiet:hover { filter: brightness(1.12); }
+  /* Compact button (card footers): 32px, give it room around it */
+  .action-sm { min-height: 2rem; padding-inline: var(--space-md); font-size: 0.8125rem; font-weight: 500; }
+
+  .icon-button { display: inline-flex; align-items: center; justify-content: center; min-width: var(--control-height); height: var(--control-height); border-radius: var(--r-control); color: var(--ink); background: linear-gradient(180deg, var(--fill-subtle), var(--fill)); box-shadow: var(--edge-hi), var(--shadow-card); transition: transform var(--duration-micro) var(--ease-smooth-out), filter var(--duration-quick) var(--ease-smooth-out); }
+  .icon-button:hover { filter: brightness(1.12); }
+  .icon-button:active { transform: scale(var(--press-scale)); }
+  .icon-button-sm { min-width: 2rem; height: 2rem; }
+
+  /* Segmented: recessed track, raised sliding pill (the options sit inside a 44px track) */
+  .segmented { position: relative; display: inline-flex; align-items: center; gap: 3px; padding: 3px; border-radius: var(--r-control); background: var(--fill); box-shadow: inset 0 1px 2px rgb(var(--shadow-tint) / 0.18), 0 0 0 1px var(--hairline); }
+  .segmented-pill { border-radius: var(--r-control); background: linear-gradient(180deg, var(--fill-strong), var(--fill-subtle)); box-shadow: var(--knob-hi), var(--shadow-float); }
+  .segmented-option { position: relative; z-index: 1; min-height: calc(var(--control-height) - 6px); padding-inline: var(--space-md); border-radius: var(--r-control); font-size: 0.875rem; line-height: 1.25; font-weight: 500; color: var(--text-secondary); }
+  .segmented-option:hover { color: var(--ink); }
+  .segmented-option[aria-checked='true'] { color: var(--ink); font-weight: 600; }
+  .segmented-option:focus-visible { outline-offset: 1px; }
+
+  /* Filter pill: a plain pressed-state toggle button (aria-pressed). Selected = lit ink. */
+  .filter { min-height: var(--control-height); padding-inline: var(--space-lg); border-radius: var(--r-control); color: var(--text-secondary); background: var(--fill); box-shadow: var(--shadow-card); font-size: 0.875rem; font-weight: 500; transition: transform var(--duration-micro) var(--ease-smooth-out), filter var(--duration-quick) var(--ease-smooth-out); }
+  .filter:hover { color: var(--ink); filter: brightness(1.12); }
+  .filter:active { transform: scale(var(--press-scale)); }
+  .filter[aria-pressed='true'] { color: var(--on-ink); font-weight: 600; background: linear-gradient(180deg, color-mix(in srgb, var(--ink) 88%, rgb(var(--highlight-tint))), var(--ink)); box-shadow: var(--knob-hi), var(--knob-lo), 0 1px 2px rgb(var(--shadow-tint) / 0.3); }
+
+  /* Chip: borderless metadata tag, not a control */
+  .chip { display: inline-flex; align-items: center; min-height: 1.75rem; padding-inline: var(--space-sm); border-radius: var(--r-control); background: var(--fill); font-size: 0.75rem; line-height: 1.05rem; font-weight: 500; color: var(--text-secondary); }
+  .chip-list { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+
+  /* Card: sheet surface, ring-and-drop shadow; add .lift for the pointer-only hover rise */
+  .card { display: flex; flex-direction: column; gap: var(--space-lg); padding: var(--space-lg); border-radius: var(--r-lg); background: var(--sheet); box-shadow: var(--shadow-float); }
+  .card-title { font-size: 1rem; line-height: 1.3; font-weight: 600; letter-spacing: var(--tracking-heading); color: var(--ink); }
+  .card-body { font-size: 0.875rem; line-height: 1.5; color: var(--text-secondary); }
+  .card-footer { border-top: 1px solid var(--hairline); padding-top: var(--space-md); }
+
+  /* Placeholder for an image that failed to load */
+  .image-placeholder { display: flex; align-items: center; justify-content: center; background: var(--fill); color: var(--text-tertiary); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .action, .icon-button, .filter { transition: none; }
+    .action:active, .icon-button:active, .filter:active { transform: none; }
+  }
+}
+
+@layer components {
+  .site-width { width: 100%; max-width: var(--page-width); margin-inline: auto; padding-inline: var(--page-gutter); }
+  .site-main { flex: 1; padding-top: var(--space-2xl); padding-bottom: var(--space-section); }
+  .content-section { display: flex; flex-direction: column; gap: var(--space-lg); }
+
+  /* Floating header: sticky, ignores pointer events outside the bar */
+  .site-header { position: sticky; top: var(--space-md); margin: var(--space-md) var(--page-gutter) 0; z-index: 40; display: flex; justify-content: center; pointer-events: none; }
+  .site-nav { position: relative; flex-wrap: wrap; width: 100%; max-width: calc(var(--page-width) - 2 * var(--page-gutter)); display: flex; align-items: center; gap: var(--space-lg); padding: var(--space-unit) var(--space-unit) var(--space-unit) var(--space-md); border-radius: var(--r-control); background: var(--sheet); box-shadow: var(--shadow-float); pointer-events: auto; }
+  .nav-content { display: contents; }
+
+  .wordmark { display: inline-flex; align-items: center; min-height: var(--control-height); min-width: var(--control-height); padding-inline: var(--space-xs); font-size: 1.0625rem; font-weight: 600; letter-spacing: var(--tracking-heading); color: var(--ink); text-decoration: none; }
+  .wordmark span { color: var(--accent); } /* the accent as a "current" mark */
+
+  .nav-pages, .nav-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-unit); list-style: none; margin: 0; padding: 0; }
+  .nav-pages { position: relative; }
+  .nav-tools { margin-left: auto; border-left: 1px solid var(--hairline); padding-left: var(--space-xs); }
+
+  .nav-link { position: relative; z-index: 1; min-width: var(--control-height); min-height: var(--control-height); display: flex; align-items: center; justify-content: center; gap: var(--space-xs); padding-inline: var(--space-md); border-radius: var(--r-control); font-size: 0.875rem; line-height: 1.25; font-weight: 500; letter-spacing: -0.006em; color: var(--text-secondary); text-decoration: none; }
+  .nav-link:hover { color: var(--ink); }
+  .nav-link.is-active { color: var(--ink); font-weight: 600; }
+  /* The sliding current-page pill; positioned inline by useNavPill. It glides only once
+     the list is data-ready, i.e. after the user navigated, never on load or resize. */
+  .nav-pill { position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 0; list-style: none; pointer-events: none; border-radius: var(--r-control); background: linear-gradient(180deg, var(--fill-strong), var(--fill)); box-shadow: var(--edge-hi), var(--shadow-card); opacity: 0; }
+  .nav-pages[data-active='true'] .nav-pill { opacity: 1; }
+  .nav-pages[data-ready='true'] .nav-pill { transition: transform var(--seg-dur) var(--ease-smooth-out), width var(--seg-dur) var(--ease-smooth-out), height var(--seg-dur) var(--ease-smooth-out), opacity var(--duration-quick) var(--ease-smooth-out); }
+
+  /* Hamburger that morphs into an X (aria-expanded drives it) */
+  .menu-line { transform-origin: 12px 12px; transition: transform var(--duration-fast) var(--ease-smooth-out), opacity var(--duration-quick); }
+  .menu-line-top { transform-origin: 12px 7px; }
+  .menu-line-bottom { transform-origin: 12px 17px; }
+  .nav-toggle[aria-expanded='true'] .menu-line-top { transform: translateY(5px) rotate(45deg); }
+  .nav-toggle[aria-expanded='true'] .menu-line-middle { opacity: 0; transform: scaleX(0.6); }
+  .nav-toggle[aria-expanded='true'] .menu-line-bottom { transform: translateY(-5px) rotate(-45deg); }
+  .site-nav > .nav-toggle { display: none; }
+
+  /* Skip link: parked off-screen, drops into place on focus (200ms in, 150ms out) */
+  .skip-link { position: fixed; top: var(--space-md); left: var(--space-md); z-index: 50; padding: var(--space-xs) var(--space-lg); min-height: var(--control-height); display: inline-flex; align-items: center; border-radius: var(--r-control); background: var(--sheet); color: var(--ink); box-shadow: var(--shadow-overlay); font-size: 0.875rem; font-weight: 600; text-decoration: none; transform: translateY(-6rem); transition: transform var(--duration-quick) var(--ease-smooth-out); }
+  .skip-link:focus { transform: translateY(0); transition-duration: var(--dialog-open-dur); }
+
+  .page-heading { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-lg); padding-block: var(--space-xl) var(--space-2xl); border-bottom: 1px solid var(--hairline); }
+  .page-heading h1 { font-size: var(--text-page-title); line-height: 1.05; font-weight: 600; letter-spacing: var(--tracking-tight); }
+
+  /* Editorial section: eyebrow/title column beside content, hairline on top */
+  .editorial-section { display: grid; grid-template-columns: minmax(12rem, 0.8fr) minmax(0, 1.8fr); gap: var(--space-2xl); border-top: 1px solid var(--hairline); padding-top: var(--space-2xl); }
+
+  /* Collapse the nav under 768px: the links become a .menu-motion panel under the bar */
+  @media (max-width: 767px) {
+    .site-nav { justify-content: space-between; }
+    .site-nav > .nav-toggle { display: inline-flex; }
+    .nav-content { display: flex; flex-direction: column; gap: var(--space-sm); position: absolute; top: calc(100% + var(--space-xs)); inset-inline: 0; padding: var(--space-md); border-radius: var(--r-lg); background: var(--sheet); box-shadow: var(--shadow-overlay); max-height: calc(100dvh - 7rem); overflow-y: auto; }
+    .nav-pages { flex-direction: column; align-items: stretch; }
+    .nav-content .nav-link { justify-content: flex-start; padding-inline: var(--space-lg); }
+    .nav-tools { margin: 0; border-left: 0; border-top: 1px solid var(--hairline); padding: var(--space-sm) 0 0; }
+  }
+  @media (max-width: 1023px) { .editorial-section { grid-template-columns: 1fr; gap: var(--space-xl); } }
+  @media (max-width: 639px) {
+    .site-header { top: var(--space-xs); margin: var(--space-xs) var(--space-sm) 0; }
+    .site-nav { gap: var(--space-unit); padding: var(--space-unit) var(--space-unit) var(--space-unit) var(--space-sm); }
+    .site-main { padding-top: var(--space-xl); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .menu-line, .nav-pill, .skip-link { transition: none !important; }
+  }
+}
+
+@layer components {
+  /* Full-viewport transparent <dialog>; pair with .dialog-motion and .dialog-stage */
+  .dialog { margin: 0; width: 100dvw; height: 100dvh; max-width: none; max-height: none; padding: var(--space-md); background: transparent; color: var(--text); }
+  .dialog::backdrop { background: var(--scrim); backdrop-filter: blur(12px); }
+  .dialog-sheet { background: var(--sheet); border-radius: var(--r-xl); box-shadow: var(--shadow-overlay); padding: var(--space-lg); }
+  /* Header bar with one primary action, above a content sheet */
+  .dialog-bar { display: flex; flex-shrink: 0; align-items: center; gap: var(--space-md); padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-lg); background: var(--sheet); border-radius: var(--r-xl); box-shadow: var(--shadow-overlay); }
+
+  @media (min-width: 640px) { .dialog { padding: var(--space-xl); } }
+}

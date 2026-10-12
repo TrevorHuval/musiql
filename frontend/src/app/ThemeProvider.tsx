@@ -11,8 +11,13 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 function initial(): Theme {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  return stored === 'light' ? 'light' : 'dark'
+  const set = document.documentElement.dataset.theme
+  if (set === 'light' || set === 'dark') return set
+  try {
+    return localStorage.getItem(STORAGE_KEY) === 'light' ? 'light' : 'dark'
+  } catch {
+    return 'dark'
+  }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -20,10 +25,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    localStorage.setItem(STORAGE_KEY, theme)
   }, [theme])
 
-  const toggle = useCallback(() => setTheme((current) => (current === 'dark' ? 'light' : 'dark')), [])
+  const toggle = useCallback(() => {
+    setTheme((current) => {
+      const next = current === 'dark' ? 'light' : 'dark'
+      try {
+        localStorage.setItem(STORAGE_KEY, next)
+      } catch {
+        /* Storage is optional. */
+      }
+      return next
+    })
+  }, [])
 
   return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>
 }

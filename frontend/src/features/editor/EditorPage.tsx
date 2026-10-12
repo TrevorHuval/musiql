@@ -216,16 +216,16 @@ function Editor({ schema, playlistId, initialMql, playlistName, playlistDescript
 
       <ResultsPanel view={view} entityLabel={entityLabel} busy={preview.isFetching} onPageChange={setPage} />
 
-      {saveOpen && <SavePlaylistDialog mql={currentMql} open onClose={() => setSaveOpen(false)} />}
-      {exportOpen && playlistId && (
+      <SavePlaylistDialog mql={currentMql} open={saveOpen} onClose={() => setSaveOpen(false)} />
+      {playlistId && (
         <ExportSpotifyDialog
           playlistId={playlistId}
           playlistName={playlistName ?? 'Playlist'}
-          open
+          open={exportOpen}
           onClose={() => setExportOpen(false)}
         />
       )}
-      {renameOpen && playlistId && (
+      {playlistId && (
         <RenameDialog
           playlist={{
             id: playlistId,
@@ -235,7 +235,7 @@ function Editor({ schema, playlistId, initialMql, playlistName, playlistDescript
             createdAt: '',
             updatedAt: '',
           }}
-          open
+          open={renameOpen}
           onClose={() => setRenameOpen(false)}
         />
       )}

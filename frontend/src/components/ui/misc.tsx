@@ -6,7 +6,7 @@ type Tone = 'signal' | 'neutral' | 'clay' | 'valid'
 
 export function Pill({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) {
   return (
-    <span className={styles.pill} data-tone={tone}>
+    <span className={`chip ${styles.pill}`} data-tone={tone}>
       {children}
     </span>
   )
@@ -14,7 +14,7 @@ export function Pill({ tone = 'neutral', children }: { tone?: Tone; children: Re
 
 export function LivePill() {
   return (
-    <span className={styles.live} title="This playlist re-runs its query every time you open it">
+    <span className={`chip ${styles.live}`} title="This playlist re-runs its query every time you open it">
       <span className={styles.liveDot} aria-hidden="true" />
       Live playlist
     </span>
@@ -30,7 +30,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export function IconButton({ icon, label, tone = 'default', className, ...rest }: IconButtonProps) {
   return (
     <button
-      className={[styles.iconButton, className].filter(Boolean).join(' ')}
+      className={['icon-button', 'icon-button-sm', styles.iconButton, className].filter(Boolean).join(' ')}
       data-tone={tone}
       aria-label={label}
       title={label}

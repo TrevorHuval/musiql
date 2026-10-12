@@ -1,13 +1,14 @@
 .panel {
+  --rail-width: 3.5rem;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: var(--space-lg);
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .sectionHead {
@@ -16,64 +17,82 @@
 }
 
 .sectionLabel {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--paper-3);
+  color: var(--text-tertiary);
 }
 
 .sourceRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .item {
   display: flex;
-  gap: 10px;
+  gap: var(--space-xs);
 }
 
 .rail {
   flex-shrink: 0;
-  width: 52px;
+  width: var(--rail-width);
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;
-  padding-top: 8px;
+  padding-top: var(--space-sm);
 }
 
 .railLabel {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--paper-4);
+  color: var(--text-tertiary);
 }
 
 .combinator {
-  height: 22px;
-  padding: 0 8px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--signal-line);
-  background: var(--signal-bg);
-  color: var(--signal-hi);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  position: relative;
+  height: 1.5rem;
+  padding: 0 var(--space-xs);
+  border-radius: var(--r-control);
+  background: var(--fill);
+  box-shadow: var(--shadow-card);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   cursor: pointer;
-  transition: filter 120ms var(--ease-out);
+  transition:
+    transform var(--duration-micro) var(--ease-smooth-out),
+    filter var(--duration-quick) var(--ease-smooth-out),
+    color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.combinator::before {
+  content: '';
+  position: absolute;
+  inset: -0.5rem -0.25rem;
 }
 
 .combinator:hover {
+  color: var(--ink);
   filter: brightness(1.12);
+}
+
+.combinator:active {
+  transform: scale(var(--press-scale));
 }
 
 .itemBody {
@@ -84,16 +103,16 @@
 .condition {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 10px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+  background: var(--sheet);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-float);
 }
 
 .conditionControls {
   display: flex;
-  gap: 8px;
+  gap: var(--space-xs);
   flex-shrink: 0;
 }
 
@@ -109,130 +128,143 @@
 .betweenRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .betweenAnd {
-  font-size: 12.5px;
-  color: var(--paper-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
 .valueList {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: var(--space-xs);
 }
 
 .valueListRow {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 
 .valueRemove {
+  position: relative;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r-sm);
-  border: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--r-control);
   background: transparent;
-  color: var(--paper-4);
+  color: var(--text-tertiary);
   cursor: pointer;
+  transition:
+    transform var(--duration-micro) var(--ease-smooth-out),
+    color var(--duration-quick) var(--ease-smooth-out),
+    background-color var(--duration-quick) var(--ease-smooth-out);
 }
 
 .valueRemove:hover {
-  color: var(--clay-hi);
-  background: var(--clay-bg);
+  color: var(--danger-hi);
+  background: var(--danger-bg);
+}
+
+.valueRemove:active {
+  transform: scale(var(--press-scale));
 }
 
 .subGroup {
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--panel) 50%, var(--inset) 50%);
-  padding: 10px;
+  border-radius: var(--r-xl);
+  background: var(--fill);
+  box-shadow:
+    inset 0 1px 2px rgb(var(--shadow-tint) / 0.18),
+    0 0 0 1px var(--hairline);
+  padding: var(--space-xs);
 }
 
 .subGroupHead {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+  padding-left: var(--space-sm);
 }
 
 .subGroupLabel {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--paper-3);
+  color: var(--text-tertiary);
 }
 
 .subGroupHint {
-  font-size: 12px;
-  color: var(--paper-4);
+  font-size: var(--text-caption);
+  color: var(--text-tertiary);
 }
 
 .subGroupRemove {
   margin-left: auto;
 }
 
-.addRow {
-  display: flex;
-  gap: 8px;
-  padding-left: 62px;
-}
-
-.group[data-root] > .addRow {
-  padding-left: 62px;
-}
-
+.addRow,
+.group[data-root] > .addRow,
 .subGroup .addRow {
-  padding-left: 62px;
+  display: flex;
+  gap: var(--space-xs);
+  padding-left: calc(var(--rail-width) + var(--space-xs));
 }
 
 .addButton {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 11px;
-  border-radius: var(--r-sm);
-  border: 1px dashed var(--line-3);
-  background: transparent;
-  color: var(--paper-2);
-  font-size: 12.5px;
+  gap: var(--space-xs);
+  min-height: 2rem;
+  padding: 0 var(--space-md);
+  border-radius: var(--r-control);
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--fill-subtle), var(--fill));
+  box-shadow: var(--edge-hi), var(--shadow-card);
+  font-size: var(--text-meta);
   font-weight: 500;
   cursor: pointer;
   transition:
-    border-color 120ms var(--ease-out),
-    color 120ms var(--ease-out);
+    transform var(--duration-micro) var(--ease-smooth-out),
+    filter var(--duration-quick) var(--ease-smooth-out);
 }
 
 .addButton:hover {
-  color: var(--paper);
-  border-color: var(--signal-line);
+  filter: brightness(1.12);
+}
+
+.addButton:active {
+  transform: scale(var(--press-scale));
 }
 
 .sortList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: flex-start;
+  gap: var(--space-xs);
 }
 
 .sortRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .limitRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 
 .limitInput {
@@ -241,8 +273,8 @@
 }
 
 .limitHint {
-  font-size: 12.5px;
-  color: var(--paper-3);
+  font-size: var(--text-meta);
+  color: var(--text-secondary);
 }
 
 @media (max-width: 640px) {
@@ -250,28 +282,15 @@
     max-width: 100%;
   }
 
-  /* The AND/OR rail moves above each row instead of eating a 62px column, so
-     nested groups keep their width. */
   .item {
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-unit);
   }
 
   .rail {
     width: auto;
     justify-content: flex-start;
     padding-top: 0;
-  }
-
-  .combinator {
-    position: relative;
-    height: 26px;
-  }
-
-  .combinator::before {
-    content: '';
-    position: absolute;
-    inset: -8px -6px;
   }
 
   .addRow,
@@ -282,18 +301,16 @@
   }
 
   .addButton {
-    height: 40px;
-    padding: 0 14px;
+    min-height: 2.5rem;
+    padding: 0 var(--space-md);
   }
 
-  /* Field and operator share the first row with the remove button; the value
-     gets a full-width row of its own. */
   .condition {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    gap: 8px;
-    padding: 8px;
+    gap: var(--space-xs);
+    padding: var(--space-xs);
   }
 
   .conditionControls {
@@ -310,8 +327,8 @@
 
   .condition > .conditionRemove {
     grid-area: 1 / 2;
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
   .conditionValue {
@@ -330,21 +347,17 @@
   }
 
   .valueRemove {
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
   .addValue {
     display: inline-flex;
     align-items: center;
     align-self: flex-start;
-    gap: 6px;
-    min-height: 40px;
-    padding: 0 12px;
-  }
-
-  .subGroup {
-    padding: 8px;
+    gap: var(--space-xs);
+    min-height: 2.5rem;
+    padding: 0 var(--space-sm);
   }
 
   .subGroupLabel,
@@ -353,8 +366,8 @@
   }
 
   .subGroupHead .subGroupRemove {
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
   .sortRow {
@@ -363,7 +376,7 @@
 
   .limitRow {
     flex-wrap: wrap;
-    gap: 6px 10px;
+    gap: var(--space-xs) var(--space-sm);
   }
 
   .limitHint {
@@ -372,10 +385,22 @@
   }
 }
 
-/* Nested groups on the narrowest phones leave ~90px per select; stack field
-   and operator so their labels stay readable. */
 @media (max-width: 400px) {
   .conditionControls {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .combinator,
+  .valueRemove,
+  .addButton {
+    transition: none;
+  }
+
+  .combinator:active,
+  .valueRemove:active,
+  .addButton:active {
+    transform: none;
   }
 }

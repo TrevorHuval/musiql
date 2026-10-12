@@ -14,6 +14,19 @@ interface DeleteDialogProps {
 }
 
 export function DeleteDialog({ playlist, open, onClose }: DeleteDialogProps) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Delete playlist"
+      description={`“${playlist.name}” and its query definition will be removed. This can’t be undone.`}
+    >
+      <DeleteBody playlist={playlist} onClose={onClose} />
+    </Dialog>
+  )
+}
+
+function DeleteBody({ playlist, onClose }: { playlist: Playlist; onClose: () => void }) {
   const remove = useDeletePlaylist()
   const [error, setError] = useState<string | null>(null)
 
@@ -28,23 +41,16 @@ export function DeleteDialog({ playlist, open, onClose }: DeleteDialogProps) {
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title="Delete playlist"
-      description={`“${playlist.name}” and its query definition will be removed. This can’t be undone.`}
-    >
-      <div className={dialogStyles.stack}>
-        {error && <Callout tone="clay" icon="x">{error}</Callout>}
-        <div className={dialogStyles.actions}>
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" variant="danger" loading={remove.isPending} onClick={handleDelete}>
-            Delete
-          </Button>
-        </div>
+    <div className={dialogStyles.stack}>
+      {error && <Callout tone="clay" icon="x">{error}</Callout>}
+      <div className={dialogStyles.actions}>
+        <Button type="button" variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="button" variant="danger" loading={remove.isPending} onClick={handleDelete}>
+          Delete
+        </Button>
       </div>
-    </Dialog>
+    </div>
   )
 }

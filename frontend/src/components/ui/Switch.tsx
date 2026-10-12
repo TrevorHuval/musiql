@@ -8,8 +8,6 @@ interface SwitchProps {
   disabled?: boolean
 }
 
-// A two-state toggle. On is the amber signal, the same colour as the live pill,
-// because turning it on makes something keep happening on its own.
 export function Switch({ checked, onChange, label, disabled }: SwitchProps) {
   return (
     <HeadlessSwitch

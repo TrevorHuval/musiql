@@ -16,6 +16,14 @@ interface RenameDialogProps {
 }
 
 export function RenameDialog({ playlist, open, onClose }: RenameDialogProps) {
+  return (
+    <Dialog open={open} onClose={onClose} title="Rename playlist">
+      <RenameForm playlist={playlist} onClose={onClose} />
+    </Dialog>
+  )
+}
+
+function RenameForm({ playlist, onClose }: { playlist: Playlist; onClose: () => void }) {
   const [name, setName] = useState(playlist.name)
   const [description, setDescription] = useState(playlist.description ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +46,6 @@ export function RenameDialog({ playlist, open, onClose }: RenameDialogProps) {
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title="Rename playlist">
       <form className={dialogStyles.form} onSubmit={handleSubmit} noValidate>
         {error && <Callout tone="clay" icon="x">{error}</Callout>}
         <Field label="Name">
@@ -71,6 +78,5 @@ export function RenameDialog({ playlist, open, onClose }: RenameDialogProps) {
           </Button>
         </div>
       </form>
-    </Dialog>
   )
 }

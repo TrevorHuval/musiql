@@ -4,119 +4,26 @@
   min-height: 100%;
 }
 
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  height: 56px;
-  padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
-  background: color-mix(in srgb, var(--vinyl) 88%, transparent);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line);
-}
-
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-  text-decoration: none;
-  color: var(--paper);
-  min-width: 0;
-}
-
-.brandMark {
-  align-self: center;
-  display: inline-flex;
-  color: var(--signal);
-}
-
-.brandName {
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.brandTag {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--paper-4);
-  letter-spacing: -0.01em;
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 8px;
-}
-
-.navIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--r-sm);
-  color: var(--paper-3);
-  border: 1px solid transparent;
-  transition:
-    color 120ms var(--ease-out),
-    background-color 120ms var(--ease-out);
-}
-
-.navIcon:hover {
-  color: var(--paper);
-  background: var(--raised);
-}
-
-.divider {
-  width: 1px;
-  height: 20px;
-  background: var(--line-2);
-  margin: 0 2px;
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--page-width);
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
 }
 
 .user {
-  font-size: 12.5px;
-  color: var(--paper-3);
-  max-width: 180px;
+  max-width: 14rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.main {
-  flex: 1;
-}
-
-@media (max-width: 620px) {
-  .brandTag,
-  .user {
-    display: none;
-  }
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-tertiary);
 }
 
 @media (max-width: 640px) {
-  .header {
-    gap: 8px;
-    padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
-  }
-
-  .actions {
-    gap: 2px;
-  }
-
-  .navIcon {
-    width: 40px;
-    height: 40px;
-  }
-
-  .brand {
-    min-height: 40px;
-    align-items: center;
+  .user {
+    display: none;
   }
 }

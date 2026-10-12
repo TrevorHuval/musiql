@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { problemToMessage } from '../../api/problem'
 import { useExportPlaylist, useSetKeepLive, useSpotifyLink, useSpotifyStatus } from '../../api/queries'
@@ -25,6 +26,11 @@ export function ExportSpotifyDialog({ playlistId, playlistName, open, onClose }:
 
   const busy = exportPlaylist.isPending
   const result = exportPlaylist.data
+  const resetExport = exportPlaylist.reset
+
+  useLayoutEffect(() => {
+    if (open) resetExport()
+  }, [open, resetExport])
 
   return (
     <Dialog open={open} onClose={busy ? () => {} : onClose} title="Export to Spotify" description={playlistName}>

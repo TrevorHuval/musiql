@@ -20,9 +20,19 @@ export function Button({
   children,
   ...rest
 }: ButtonProps) {
+  const surface = variant === 'primary' ? 'action-primary' : 'action-quiet'
   return (
     <button
-      className={[styles.button, styles[variant], styles[size], className]
+      className={[
+        'action',
+        surface,
+        size === 'sm' && 'action-sm',
+        styles.button,
+        variant === 'ghost' && styles.ghost,
+        variant === 'danger' && styles.danger,
+        size === 'sm' && styles.sm,
+        className,
+      ]
         .filter(Boolean)
         .join(' ')}
       disabled={disabled || loading}
