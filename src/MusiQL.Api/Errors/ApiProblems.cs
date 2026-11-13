@@ -38,6 +38,10 @@ public static class ApiProblems
             detail: "Too many failed attempts. Try again later.",
             statusCode: StatusCodes.Status423Locked,
             type: Base + "account-locked"),
+        AuthFailure.RegistrationClosed => Results.Problem(
+            title: "Registration is closed",
+            statusCode: StatusCodes.Status403Forbidden,
+            type: Base + "registration-closed"),
         _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError)
     };
 

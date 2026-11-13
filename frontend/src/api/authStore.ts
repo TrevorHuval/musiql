@@ -18,6 +18,19 @@ function emit() {
   for (const listener of listeners) listener()
 }
 
+// Another tab may have rotated the tokens; re-read before relying on the in-memory copy.
+export function reloadAuth(): TokenPair | null {
+  current = read()
+  return current
+}
+
+window.addEventListener('storage', (e) => {
+  if (e.key === STORAGE_KEY || e.key === null) {
+    current = read()
+    emit()
+  }
+})
+
 export function getAuth(): TokenPair | null {
   return current
 }

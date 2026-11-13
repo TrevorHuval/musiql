@@ -157,8 +157,9 @@ public sealed class AuthService(
         return new IssuedTokens(user, access, refresh);
     }
 
-    // A user keeps a bounded number of live sessions; issuing one more revokes
-    // the oldest so the token table cannot grow with repeated logins.
+    // A user keeps a bounded number of live sessions; issuing one more deletes
+    // the oldest (not revokes: a revoked-but-unexpired token looks like replay on
+    // refresh and would sign the user out everywhere) so the token table cannot grow with repeated logins.
     private async Task TrimActiveAsync(Guid userId, DateTime now, CancellationToken ct)
     {
         var max = limits.Value.MaxActiveRefreshTokensPerUser;
@@ -178,7 +179,7 @@ public sealed class AuthService(
         {
             await db.RefreshTokens
                 .Where(t => surplus.Contains(t.Id))
-                .ExecuteUpdateAsync(set => set.SetProperty(t => t.RevokedAt, now), ct);
+                .ExecuteDeleteAsync(ct);
         }
     }
 }

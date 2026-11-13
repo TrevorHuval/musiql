@@ -125,6 +125,57 @@ public class AuthFlowTests(ApiFixture fixture, ITestOutputHelper output)
         Assert.Equal(HttpStatusCode.Unauthorized, reuse.StatusCode);
     }
 
+    [Fact]
+    public async Task Session_cap_deletes_oldest_token_without_revoking_the_rest()
+    {
+        if (Skip())
+        {
+            return;
+        }
+
+        using var factory = new MusiQLApiFactory(fixture.ConnectionString, new Dictionary<string, string>
+        {
+            ["Limits:MaxActiveRefreshTokensPerUser"] = "1"
+        });
+        var client = factory.CreateClient();
+        var email = ApiFixture.UniqueEmail();
+        var first = await fixture.RegisterAsync(client, email);
+        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, "Password123!"));
+        var second = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
+
+        var trimmed = await client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(first.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, trimmed.StatusCode);
+
+        var survivor = await client.PostAsJsonAsync("/api/auth/refresh", new RefreshRequest(second!.RefreshToken));
+        Assert.Equal(HttpStatusCode.OK, survivor.StatusCode);
+    }
+
+    [Fact]
+    public async Task Registration_past_user_cap_is_forbidden()
+    {
+        if (Skip())
+        {
+            return;
+        }
+
+        using var factory = new MusiQLApiFactory(fixture.ConnectionString, new Dictionary<string, string>
+        {
+            ["Limits:MaxUsers"] = "1"
+        });
+        var client = factory.CreateClient();
+
+        // The database is shared, so at least one user may already exist.
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/register", new RegisterRequest(ApiFixture.UniqueEmail(), "Password123!"));
+        if (response.StatusCode == HttpStatusCode.Created)
+        {
+            response = await client.PostAsJsonAsync(
+                "/api/auth/register", new RegisterRequest(ApiFixture.UniqueEmail(), "Password123!"));
+        }
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
     private bool Skip()
     {
         if (fixture.Available)

@@ -1,4 +1,4 @@
-import { clearAuth, getAuth, setAuth } from './authStore'
+import { clearAuth, getAuth, reloadAuth, setAuth } from './authStore'
 import type { MqlError, ProblemDetails, TokenPair } from './types'
 
 export class ApiError extends Error {
@@ -47,20 +47,27 @@ async function refreshTokens(): Promise<TokenPair | null> {
   if (!existing) return null
 
   if (!refreshInFlight) {
+    const run = async (): Promise<TokenPair | null> => {
+      // Another tab may have refreshed already; its stored pair is newer than ours.
+      const stored = reloadAuth()
+      if (!stored) return null
+      if (stored.refreshToken !== existing.refreshToken) return stored
+      const response = await fetch(apiUrl('/api/auth/refresh'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: stored.refreshToken }),
+      })
+      if (!response.ok) {
+        clearAuth()
+        return null
+      }
+      const tokens = (await response.json()) as TokenPair
+      setAuth(tokens)
+      return tokens
+    }
     refreshInFlight = (async () => {
       try {
-        const response = await fetch(apiUrl('/api/auth/refresh'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken: existing.refreshToken }),
-        })
-        if (!response.ok) {
-          clearAuth()
-          return null
-        }
-        const tokens = (await response.json()) as TokenPair
-        setAuth(tokens)
-        return tokens
+        return navigator.locks ? await navigator.locks.request('musiql-refresh', run) : await run()
       } catch {
         return null
       } finally {
