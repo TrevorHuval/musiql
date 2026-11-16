@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button'
 import { Callout } from '../../components/ui/Callout'
 import { Icon } from '../../components/ui/Icon'
 import { Pill, Spinner } from '../../components/ui/misc'
+import { AccessRequestPanel } from './AccessRequestPanel'
 import styles from './settings.module.css'
 
 export function SettingsPage() {
@@ -67,6 +68,7 @@ function DisconnectedPanel() {
         Link your Spotify account to push MusiQL playlists to Spotify and to fill{' '}
         <span className={styles.mono}>from library</span> queries with your saved tracks.
       </p>
+      <AccessRequestPanel />
       {connect.isError && (
         <Callout tone="clay" icon="x" title="Couldn’t start the connection">
           {problemToMessage(connect.error)}

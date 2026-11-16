@@ -6,6 +6,7 @@ public static class RateLimits
     public const string Auth = "auth";
     public const string Register = "register";
     public const string Write = "write";
+    public const string AccessRequest = "access-request";
 }
 
 public sealed class LimitsOptions
@@ -23,6 +24,9 @@ public sealed class LimitsOptions
 
     // Per user on playlist and Spotify account mutations.
     public int WritesPerMinute { get; set; } = 30;
+
+    // Per user on Spotify access requests, ahead of the stored cooldown.
+    public int AccessRequestsPerHour { get; set; } = 5;
 
     // Per user on query, catalog lookup and export routes.
     public int QueriesPerTenSeconds { get; set; } = 30;

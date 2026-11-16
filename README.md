@@ -121,6 +121,12 @@ export Spotify__TokenEncryptionKey=$(openssl rand -base64 32)   # 32 bytes, base
 
 The redirect URI must be registered verbatim in the Spotify app dashboard. Spotify rejects `localhost` for loopback redirects, so use `127.0.0.1` (open the dev app at `http://127.0.0.1:5173`). PKCE is used for the token exchange, so no client secret is required; a `Spotify__ClientSecret` is neither used nor needed. A dev-only encryption key is set in `appsettings.Development.json` so local runs work out of the box.
 
+### Invite-only access requests
+
+While the Spotify app is in Development Mode, Spotify only lets accounts listed under User Management in the developer dashboard connect (5 at most). Settings tells users that linking is invite-only and offers a **Request access** form: `POST /api/spotify/access-request` takes the user's Spotify account email and an optional note and emails the operator, and `GET /api/spotify/access-request` reports whether they have asked. If an unlisted account gets through consent anyway, Spotify answers the profile call with 403 and the callback returns the `spotify-invite-only` problem instead of a generic upstream error.
+
+The form is off until the `AccessRequests` section is configured: `NotifyEmail` (where requests go), `FromEmail` (a verified sender), and `SmtpHost`/`SmtpPort`/`SmtpUsername`/`SmtpPassword` (for example Amazon SES SMTP credentials). The recipient, sender and subject are never taken from user input. The Spotify email must be a single bare address with no line breaks, the note is capped at 500 characters with control characters stripped and is quoted in the plain-text body, and each user can ask once per `Cooldown` (default 24 hours). `MaxPerDay` (default 10) caps emails across all users, and the route has its own per-user rate limit (`Limits__AccessRequestsPerHour`, default 5). A failed send is not recorded, so the user can retry.
+
 ## Catalog ETL
 
 The `MusiQL.Etl` console builds the `catalog` schema from MusicBrainz PostgreSQL dumps. It imports only what playlist queries need — artists, release groups, recordings, genres, and the genre vote links between them — into a clean, app-owned schema. Releases are used during the load to decide which albums and tracks are official, but are not stored. Every row keeps its MusicBrainz MBID for later Spotify matching and dump refreshes.

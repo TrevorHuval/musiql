@@ -6,12 +6,15 @@ public static class SpotifyServiceCollectionExtensions
         this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<SpotifyOptions>(configuration.GetSection(SpotifyOptions.Section));
+        services.Configure<AccessRequestOptions>(configuration.GetSection(AccessRequestOptions.Section));
 
         services.AddSingleton<ITokenProtector, AesGcmTokenProtector>();
         services.AddSingleton(new RequestThrottle(TimeSpan.FromSeconds(1.1)));
 
         services.AddScoped<SpotifyTokenClient>();
         services.AddScoped<SpotifyAuthService>();
+        services.AddScoped<SpotifyAccessRequestService>();
+        services.AddSingleton<IAccessRequestMailer, SmtpAccessRequestMailer>();
         services.AddScoped<ISpotifyClientFactory, SpotifyClientFactory>();
         services.AddScoped<IMusicBrainzIsrcLookup, MusicBrainzIsrcLookup>();
         services.AddScoped<TrackMatcher>();

@@ -13,6 +13,8 @@ public static class SpotifyEndpoints
         group.MapGet("/status", Status);
         group.MapPost("/connect", Connect).RequireRateLimiting(RateLimits.Write);
         group.MapPost("/callback", Callback).RequireRateLimiting(RateLimits.Write);
+        group.MapGet("/access-request", AccessRequestStatus);
+        group.MapPost("/access-request", RequestAccess).RequireRateLimiting(RateLimits.AccessRequest);
         group.MapPost("/disconnect", Disconnect).RequireRateLimiting(RateLimits.Write);
         group.MapPost("/library/sync", SyncLibrary).RequireRateLimiting(RateLimits.Query);
         return group;
@@ -50,9 +52,36 @@ public static class SpotifyEndpoints
             var status = await auth.CompleteAsync(principal.UserId()!.Value, request.State, request.Code, ct);
             return Results.Ok(status);
         }
-        catch (Exception ex) when (ex is SpotifyNotConfiguredException or SpotifyAuthStateException or SpotifyApiException)
+        catch (Exception ex) when (ex is SpotifyNotConfiguredException or SpotifyAuthStateException
+                                       or SpotifyApiException or SpotifyAccessRestrictedException)
         {
             return ApiProblems.Spotify(ex);
+        }
+    }
+
+    private static async Task<IResult> AccessRequestStatus(
+        ClaimsPrincipal principal, SpotifyAccessRequestService requests, CancellationToken ct)
+    {
+        var status = await requests.GetStatusAsync(principal.UserId()!.Value, ct);
+        return Results.Ok(status);
+    }
+
+    private static async Task<IResult> RequestAccess(
+        SpotifyAccessRequestBody body, ClaimsPrincipal principal, SpotifyAccessRequestService requests,
+        OperationLocks locks, CancellationToken ct)
+    {
+        var userId = principal.UserId()!.Value;
+        try
+        {
+            using var _ = locks.Acquire($"access-request:{userId}", "An access request");
+            var status = await requests.RequestAsync(userId, body.SpotifyEmail, body.Note, ct);
+            return Results.Ok(status);
+        }
+        catch (Exception ex) when (ex is AccessRequestsDisabledException or AccessRequestValidationException
+                                       or AccessRequestCooldownException or AccessRequestLimitException
+                                       or AccessRequestDeliveryException)
+        {
+            return ApiProblems.AccessRequest(ex);
         }
     }
 

@@ -113,6 +113,43 @@ public static class ApiProblems
             detail: e.Message,
             statusCode: StatusCodes.Status502BadGateway,
             type: Base + "spotify-upstream"),
+        SpotifyAccessRestrictedException => Results.Problem(
+            title: "Spotify access is invite-only",
+            detail: "MusiQL's Spotify connection is invite-only for now and this Spotify account "
+                + "hasn't been added yet. Request access from Settings.",
+            statusCode: StatusCodes.Status403Forbidden,
+            type: Base + "spotify-invite-only"),
+        _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError)
+    };
+
+    public static IResult AccessRequest(Exception exception) => exception switch
+    {
+        AccessRequestsDisabledException => Results.Problem(
+            title: "Access requests are not available",
+            detail: "Requesting Spotify access isn't set up on this server.",
+            statusCode: StatusCodes.Status503ServiceUnavailable,
+            type: Base + "access-request-disabled"),
+        AccessRequestValidationException e => Results.Problem(
+            title: "Check your request",
+            detail: e.Message,
+            statusCode: StatusCodes.Status400BadRequest,
+            type: Base + "access-request-invalid"),
+        AccessRequestCooldownException e => Results.Problem(
+            title: "Already requested",
+            detail: "You already asked for access. You can ask again after the cooldown.",
+            statusCode: StatusCodes.Status429TooManyRequests,
+            type: Base + "access-request-cooldown",
+            extensions: new Dictionary<string, object?> { ["retryAt"] = e.RetryAt }),
+        AccessRequestLimitException => Results.Problem(
+            title: "Try again tomorrow",
+            detail: "MusiQL has received a lot of access requests today. Please try again tomorrow.",
+            statusCode: StatusCodes.Status429TooManyRequests,
+            type: Base + "access-request-limit"),
+        AccessRequestDeliveryException => Results.Problem(
+            title: "Request not sent",
+            detail: "The request couldn't be delivered. Please try again later.",
+            statusCode: StatusCodes.Status502BadGateway,
+            type: Base + "access-request-delivery"),
         _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError)
     };
 }

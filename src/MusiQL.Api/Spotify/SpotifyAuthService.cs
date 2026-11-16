@@ -66,7 +66,18 @@ public sealed class SpotifyAuthService(
 
         var tokens = await tokenClient.ExchangeCodeAsync(code, stored.CodeVerifier, stored.RedirectUri, ct);
         var client = new SpotifyUserClient(httpFactory.CreateClient(SpotifyClientFactory.HttpClientName), tokens.AccessToken);
-        var profile = await client.GetProfileAsync(ct);
+        SpotifyProfile profile;
+        try
+        {
+            profile = await client.GetProfileAsync(ct);
+        }
+        catch (SpotifyApiException ex) when (ex.Status == StatusCodes.Status403Forbidden)
+        {
+            // A Development Mode app answers 403 for accounts missing from its
+            // User Management allowlist, even after a successful authorization.
+            await db.SaveChangesAsync(ct);
+            throw new SpotifyAccessRestrictedException();
+        }
 
         var now = DateTime.UtcNow;
         var account = await db.SpotifyAccounts.FirstOrDefaultAsync(a => a.UserId == userId, ct);

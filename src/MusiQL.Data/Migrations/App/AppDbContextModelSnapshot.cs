@@ -385,6 +385,34 @@ namespace MusiQL.Data.Migrations.App
                     b.ToTable("refresh_token", "app");
                 });
 
+            modelBuilder.Entity("MusiQL.Data.App.SpotifyAccessRequest", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<string>("SpotifyEmail")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("spotify_email");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("RequestedAt");
+
+                    b.ToTable("spotify_access_request", "app");
+                });
+
             modelBuilder.Entity("MusiQL.Data.App.SpotifyAccount", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -723,6 +751,15 @@ namespace MusiQL.Data.Migrations.App
                     b.HasOne("MusiQL.Data.App.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MusiQL.Data.App.SpotifyAccessRequest", b =>
+                {
+                    b.HasOne("MusiQL.Data.App.AppUser", null)
+                        .WithOne()
+                        .HasForeignKey("MusiQL.Data.App.SpotifyAccessRequest", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
