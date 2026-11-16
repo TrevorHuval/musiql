@@ -4,6 +4,14 @@ public sealed record SpotifyConnectResponse(string AuthorizeUrl);
 
 public sealed record SpotifyCallbackRequest(string State, string Code);
 
+public sealed record SpotifyAccessRequestBody(string? SpotifyEmail, string? Note);
+
+public sealed record SpotifyAccessRequestStatus(
+    bool Enabled,
+    DateTime? RequestedAt,
+    string? SpotifyEmail,
+    DateTime? CanRequestAgainAt);
+
 public sealed record SpotifyConnectionStatus(
     bool Connected,
     string? DisplayName,

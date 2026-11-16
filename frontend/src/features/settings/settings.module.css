@@ -193,3 +193,20 @@
     flex-basis: 14rem;
   }
 }
+
+.calloutText {
+  margin: 0 0 var(--space-sm);
+}
+
+.requestForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.requestError {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--danger);
+}

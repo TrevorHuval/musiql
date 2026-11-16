@@ -12,6 +12,7 @@ export const keys = {
     ['playlists', id, 'tracks', page, pageSize] as const,
   preview: (input: PreviewInput) => ['preview', input] as const,
   spotifyStatus: ['spotify', 'status'] as const,
+  spotifyAccessRequest: ['spotify', 'access-request'] as const,
   spotifyLink: (id: string) => ['playlists', id, 'spotify'] as const,
 }
 
@@ -67,6 +68,19 @@ export function usePlaylistTracks(id: string, page: number, pageSize: number) {
 
 export function useSpotifyStatus() {
   return useQuery({ queryKey: keys.spotifyStatus, queryFn: spotify.status })
+}
+
+export function useSpotifyAccessRequest() {
+  return useQuery({ queryKey: keys.spotifyAccessRequest, queryFn: spotify.accessRequest })
+}
+
+export function useRequestSpotifyAccess() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ spotifyEmail, note }: { spotifyEmail: string; note: string }) =>
+      spotify.requestAccess(spotifyEmail, note),
+    onSuccess: (status) => client.setQueryData(keys.spotifyAccessRequest, status),
+  })
 }
 
 export function useDisconnectSpotify() {

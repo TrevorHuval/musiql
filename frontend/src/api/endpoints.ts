@@ -8,6 +8,7 @@ import type {
   PlaylistSpotifyLink,
   QueryPage,
   SchemaResponse,
+  SpotifyAccessRequestStatus,
   SpotifyConnectResponse,
   SpotifyStatus,
   Suggestion,
@@ -52,6 +53,12 @@ export const spotify = {
     apiRequest<SpotifyStatus>('/api/spotify/callback', { method: 'POST', body: { state, code } }),
   disconnect: () => apiRequest<void>('/api/spotify/disconnect', { method: 'POST' }),
   syncLibrary: () => apiRequest<LibrarySyncResult>('/api/spotify/library/sync', { method: 'POST' }),
+  accessRequest: () => apiRequest<SpotifyAccessRequestStatus>('/api/spotify/access-request'),
+  requestAccess: (spotifyEmail: string, note: string) =>
+    apiRequest<SpotifyAccessRequestStatus>('/api/spotify/access-request', {
+      method: 'POST',
+      body: { spotifyEmail, note: note || null },
+    }),
 }
 
 export interface PreviewInput {

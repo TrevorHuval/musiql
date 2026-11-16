@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MusiQL.Tests.Api;
 
@@ -7,7 +9,9 @@ namespace MusiQL.Tests.Api;
 // per-address limits are raised far above what a test run produces unless a
 // test asks for specific values.
 public sealed class MusiQLApiFactory(
-    string connectionString, IReadOnlyDictionary<string, string>? settings = null)
+    string connectionString,
+    IReadOnlyDictionary<string, string>? settings = null,
+    Action<IServiceCollection>? services = null)
     : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -26,6 +30,11 @@ public sealed class MusiQLApiFactory(
         foreach (var (key, value) in settings ?? new Dictionary<string, string>())
         {
             builder.UseSetting(key, value);
+        }
+
+        if (services is not null)
+        {
+            builder.ConfigureTestServices(services);
         }
     }
 }

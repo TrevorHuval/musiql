@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<SpotifyAccount> SpotifyAccounts => Set<SpotifyAccount>();
     public DbSet<SpotifyAuthState> SpotifyAuthStates => Set<SpotifyAuthState>();
+    public DbSet<SpotifyAccessRequest> SpotifyAccessRequests => Set<SpotifyAccessRequest>();
     public DbSet<SpotifyPlaylistLink> SpotifyPlaylistLinks => Set<SpotifyPlaylistLink>();
     public DbSet<SpotifyPlaylistLinkTrack> SpotifyPlaylistLinkTracks => Set<SpotifyPlaylistLinkTrack>();
     public DbSet<SpotifySavedTrack> SpotifySavedTracks => Set<SpotifySavedTrack>();
@@ -88,6 +89,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(s => s.RedirectUri).HasMaxLength(512).IsRequired();
             e.HasIndex(s => s.ExpiresAt);
             e.HasOne<AppUser>().WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<SpotifyAccessRequest>(e =>
+        {
+            e.ToTable("spotify_access_request");
+            e.HasKey(r => r.UserId);
+            e.Property(r => r.UserId).ValueGeneratedNever();
+            e.Property(r => r.SpotifyEmail).HasMaxLength(SpotifyAccessRequest.MaxEmailLength).IsRequired();
+            e.Property(r => r.Note).HasMaxLength(SpotifyAccessRequest.MaxNoteLength);
+            e.HasIndex(r => r.RequestedAt);
+            e.HasOne<AppUser>().WithOne().HasForeignKey<SpotifyAccessRequest>(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         model.Entity<SpotifyPlaylistLink>(e =>

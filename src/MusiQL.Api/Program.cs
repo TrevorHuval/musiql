@@ -143,6 +143,13 @@ builder.Services.AddRateLimiter(options =>
             Window = TimeSpan.FromMinutes(1)
         }));
 
+    options.AddPolicy(RateLimits.AccessRequest, http =>
+        RateLimitPartition.GetFixedWindowLimiter(UserOrAddress(http), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = limits.AccessRequestsPerHour,
+            Window = TimeSpan.FromHours(1)
+        }));
+
     options.AddPolicy(RateLimits.Auth, http =>
         RateLimitPartition.GetFixedWindowLimiter(ClientAddress(http), _ => new FixedWindowRateLimiterOptions
         {

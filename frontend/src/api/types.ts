@@ -85,6 +85,13 @@ export interface SpotifyStatus {
   libraryMatchedCount: number
 }
 
+export interface SpotifyAccessRequestStatus {
+  enabled: boolean
+  requestedAt: string | null
+  spotifyEmail: string | null
+  canRequestAgainAt: string | null
+}
+
 export interface SpotifyConnectResponse {
   authorizeUrl: string
 }
