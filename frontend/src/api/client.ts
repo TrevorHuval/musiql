@@ -35,7 +35,7 @@ interface RequestOptions {
 let refreshInFlight: Promise<TokenPair | null> | null = null
 
 // Vite's BASE_URL is the path prefix the app is deployed under ("/" locally,
-// "/musiql/" behind the reverse proxy). API routes live under the same prefix.
+// or a prefix such as "/app/" behind a reverse proxy). API routes live under the same prefix.
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
 
 export function apiUrl(path: string): string {
