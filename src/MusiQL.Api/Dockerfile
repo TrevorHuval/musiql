@@ -20,4 +20,7 @@ WORKDIR /app
 COPY --from=build /app ./
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
+# The API writes nothing to disk and listens on an unprivileged port, so it
+# runs as the image's built-in non-root user.
+USER $APP_UID
 ENTRYPOINT ["dotnet", "MusiQL.Api.dll"]

@@ -32,6 +32,8 @@ public sealed class AuthService(
     IOptions<JwtOptions> jwt,
     IOptions<LimitsOptions> limits)
 {
+    private static readonly AppUser UnknownUser = new();
+
     public async Task<AuthResult> RegisterAsync(string email, string password, CancellationToken ct)
     {
         var maxUsers = limits.Value.MaxUsers;
@@ -62,6 +64,9 @@ public sealed class AuthService(
         var user = await users.FindByEmailAsync(email);
         if (user is null)
         {
+            // Spend the same work a real password check costs, so response time
+            // does not tell an unknown address apart from a wrong password.
+            users.PasswordHasher.HashPassword(UnknownUser, password);
             return AuthResult.Fail(AuthFailure.InvalidCredentials);
         }
 
