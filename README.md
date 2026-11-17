@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/TrevorHuval/musiql/actions/workflows/ci.yml/badge.svg)](https://github.com/TrevorHuval/musiql/actions/workflows/ci.yml) [![CodeQL](https://github.com/TrevorHuval/musiql/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/TrevorHuval/musiql/security/code-scanning) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
-**Live demo: [musiql.trevorhuval.com](https://musiql.trevorhuval.com)** — register an account and try the canonical query below. Deployed on AWS EC2 via GitHub Actions and multi-arch Docker images.
+**Live demo: [musiql.trevorhuval.com](https://musiql.trevorhuval.com)** — register an account and try the canonical query below. Published as multi-arch Docker images to GHCR by GitHub Actions and hosted at the root of its own subdomain.
 
 ![Playlist builder with live results](.github/images/builder.png)
 
@@ -71,7 +71,7 @@ docker compose --profile prod up -d --build
 dotnet run --project src/MusiQL.Etl -- load --sample   # load catalog into the compose db
 ```
 
-The app is then at http://localhost:8088. The plain `docker compose up -d` (no profile) starts only Postgres for the dev workflow above.
+The app is then at http://localhost:8088. The web image serves from `/` by default; to host it under a path prefix behind a reverse proxy, build with `--build-arg BASE_PATH=/prefix/` (CI builds it with `BASE_PATH=/` for musiql.trevorhuval.com). The API image runs as a non-root user. The plain `docker compose up -d` (no profile) starts only Postgres for the dev workflow above.
 
 ### Analytics
 
