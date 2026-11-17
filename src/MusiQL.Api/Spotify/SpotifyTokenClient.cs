@@ -10,6 +10,8 @@ public sealed class SpotifyTokenClient(IHttpClientFactory httpFactory, IOptions<
 {
     public const string HttpClientName = "spotify-accounts";
 
+    private const int MaxErrorBody = 300;
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public Task<SpotifyTokens> ExchangeCodeAsync(
@@ -39,7 +41,10 @@ public sealed class SpotifyTokenClient(IHttpClientFactory httpFactory, IOptions<
         var body = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
-            throw new SpotifyApiException((int)response.StatusCode, $"Spotify token request failed: {body}");
+            // The message reaches the client and the playlist's stored refresh
+            // error, so an upstream body is only ever quoted in part.
+            throw new SpotifyApiException((int)response.StatusCode,
+                $"Spotify token request failed: {(body.Length <= MaxErrorBody ? body : body[..MaxErrorBody])}");
         }
 
         var dto = JsonSerializer.Deserialize<TokenDto>(body, Json)

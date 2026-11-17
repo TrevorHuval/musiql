@@ -73,6 +73,8 @@ builder.Services
             ValidAudience = jwt.Audience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            // Tokens are only ever issued with HS256 (TokenService); nothing else is accepted.
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey)),
             ClockSkew = TimeSpan.FromSeconds(30)
         };

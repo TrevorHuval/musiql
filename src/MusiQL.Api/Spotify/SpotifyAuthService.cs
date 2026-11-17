@@ -56,13 +56,22 @@ public sealed class SpotifyAuthService(
         Guid userId, string state, string code, CancellationToken ct)
     {
         EnsureConfigured();
-        var stored = await db.SpotifyAuthStates.FirstOrDefaultAsync(s => s.State == state, ct);
+        var stored = await db.SpotifyAuthStates.AsNoTracking().FirstOrDefaultAsync(s => s.State == state, ct);
         if (stored is null || stored.UserId != userId || stored.ExpiresAt < DateTime.UtcNow)
         {
             throw new SpotifyAuthStateException();
         }
 
-        db.SpotifyAuthStates.Remove(stored);
+        // Consumed before the exchange, in its own statement, so a state is good
+        // for one attempt whether or not Spotify accepts the code, and two
+        // callbacks racing on the same state cannot both pass.
+        var consumed = await db.SpotifyAuthStates
+            .Where(s => s.State == state && s.UserId == userId)
+            .ExecuteDeleteAsync(ct);
+        if (consumed != 1)
+        {
+            throw new SpotifyAuthStateException();
+        }
 
         var tokens = await tokenClient.ExchangeCodeAsync(code, stored.CodeVerifier, stored.RedirectUri, ct);
         var client = new SpotifyUserClient(httpFactory.CreateClient(SpotifyClientFactory.HttpClientName), tokens.AccessToken);
@@ -75,7 +84,6 @@ public sealed class SpotifyAuthService(
         {
             // A Development Mode app answers 403 for accounts missing from its
             // User Management allowlist, even after a successful authorization.
-            await db.SaveChangesAsync(ct);
             throw new SpotifyAccessRestrictedException();
         }
 
